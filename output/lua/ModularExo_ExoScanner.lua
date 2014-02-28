@@ -2,28 +2,28 @@
 Script.Load("lua/MapBlipMixin.lua")
 
 
-class 'ExoScan' (Entity)
+class 'ExoScanner' (Entity)
 
-ExoScan.kMapName = "exoscan"
+ExoScanner.kMapName = "ExoScanner"
 
-ExoScan.kScanEffect = PrecacheAsset("cinematics/marine/observatory/scan.cinematic")
-ExoScan.kScanSound = PrecacheAsset("sound/NS2.fev/marine/commander/scan")
+ExoScanner.kScanEffect = PrecacheAsset("cinematics/marine/observatory/scan.cinematic")
+ExoScanner.kScanSound = PrecacheAsset("sound/NS2.fev/marine/commander/scan")
 
 local scanConeAngle = math.rad(45)
-ExoScan.kScanDistance = 1
+ExoScanner.kScanDistance = 1
 local networkVars = {
     
 }
 
-function ExoScan:OnCreate()
+function ExoScanner:OnCreate()
     Entity.OnCreate(self)
-    StartSoundEffectOnEntity(ExoScan.kScanSound, self)
+    StartSoundEffectOnEntity(ExoScanner.kScanSound, self)
 end
-function ExoScan:OnScanButton()
+function ExoScanner:OnScanButton()
 	self:PerformScan()
 end
 
-function ExoScan:PerformScan()
+function ExoScanner:PerformScan()
     local player = self:GetParent()
     local exoViewAngles = player:GetViewAngles()
     local exoForwardCoords = exoViewAngles:GetCoords()
@@ -48,4 +48,4 @@ function ExoScan:PerformScan()
     end
 end
 
-Shared.LinkClassToMap("ExoScan", ExoScan.kMapName, networkVars)
+Shared.LinkClassToMap("ExoScanner", ExoScanner.kMapName, networkVars)

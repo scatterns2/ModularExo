@@ -3,6 +3,7 @@ Script.Load("lua/Weapons/Marine/Minigun.lua")
 Script.Load("lua/Weapons/Marine/Railgun.lua")
 Script.Load("lua/Weapons/Marine/Claw.lua")
 
+Script.Load("lua/ModularExo_ExoScanner.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoWeaponHolder.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoFlamer.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoWelder.lua")
@@ -195,7 +196,7 @@ kExoModuleTypesData = {
     [kExoModuleTypes.Scanner] = {
         category = kExoModuleCategories.Utility,
         powerCost = 20,
-        mapName = ExoScan.kMapName,
+        mapName = ExoScanner.kMapName,
     },
 }
 

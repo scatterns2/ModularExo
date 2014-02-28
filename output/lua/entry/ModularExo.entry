@@ -1,0 +1,7 @@
+modEntry = [[
+Client: lua/ModularExo_Client.lua,
+Server: lua/ModularExo_Server.lua,
+Predict: lua/ModularExo_Predict.lua,
+Shared: lua/ModularExo_Shared.lua,
+Priority: 5
+]]
