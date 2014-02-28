@@ -56,103 +56,105 @@ GUIMarineBuyMenu.kExoModuleData = {
     -- Power modules
     [kExoModuleTypes.Power1] = {
         label = "EXO_POWER_1", tooltip = "EXO_POWER_1_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Power2] = {
         label = "EXO_POWER_2", tooltip = "EXO_POWER_2_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Power3] = {
         label = "EXO_POWER_3", tooltip = "EXO_POWER_3_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Power4] = {
         label = "EXO_POWER_4", tooltip = "EXO_POWER_4_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Power5] = {
         label = "EXO_POWER_5", tooltip = "EXO_POWER_5_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
 	[kExoModuleTypes.Power6] = {
         label = "EXO_POWER_6", tooltip = "EXO_POWER_6_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     
     -- Weapon modules
 	[kExoModuleTypes.Claw] = {
         label = "Claw", tooltip = "EXO_WEAPON_CLAW_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Welder] = {
         label = "Welder", tooltip = "EXO_WEAPON_WELDER_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     }, 
     [kExoModuleTypes.Shield] = {
         label = "Shield", tooltip = "EXO_WEAPON_SHIELD_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },     
 	[kExoModuleTypes.Minigun] = {
         label = "Minigun", tooltip = "EXO_WEAPON_MMINIGUN_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     }, 
 	[kExoModuleTypes.Railgun] = {
         label = "Railgun", tooltip = "EXO_WEAPON_RAILGUN_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Flamethrower] = {
         label = "Flamethrower", tooltip = "EXO_WEAPON_FLAMETHROWER_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     
     -- Armor modules
     [kExoModuleTypes.Armor1] = {
         label = "EXO_ARMOR_1", tooltip = "EXO_ARMOR_1_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     [kExoModuleTypes.Armor2] = {
         label = "EXO_ARMOR_2", tooltip = "EXO_ARMOR_2_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
 	[kExoModuleTypes.Armor3] = {
         label = "EXO_ARMOR_3", tooltip = "EXO_ARMOR_3_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
+    
+    -- Damage modules
     [kExoModuleTypes.Damage1] = {
         label = "EXO_DAMAGE_1", tooltip = "EXO_DAMAGE_1_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
 	[kExoModuleTypes.Damage2] = {
         label = "EXO_DAMAGE_2", tooltip = "EXO_DAMAGE_2_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
 	[kExoModuleTypes.Damage3] = {
         label = "EXO_DAMAGE_3", tooltip = "EXO_DAMAGE_3_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
     
     -- Utility modules
     [kExoModuleTypes.Scanner] = {
         label = "EXO_UTILITY_SCANNER", tooltip = "EXO_UTILITY_SCANNER_TOOLTIP",
-        image = GUIMarineBuyMenu.kBigIconTexture, imageSize = GUIMarineBuyMenu.kBigIconSize,
-        imageTexCoords = GetBigIconPixelCoords(kTechId.Axe),
+        image = GUIMarineBuyMenu.kBigIconTexture,
+        imageTexCoords = {GetBigIconPixelCoords(kTechId.Axe)},
     },
 }

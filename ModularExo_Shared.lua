@@ -5,6 +5,7 @@ Script.Load("lua/ModularExo_NetworkMessages.lua")
 
 Script.Load("lua/ModularExo_Exo.lua")
 Script.Load("lua/ModularExo_Marine.lua")
+Script.Load("lua/ModularExo_PrototypeLab.lua")
 
 Script.Load("lua/ModularExo_ExoScanner.lua")
 
