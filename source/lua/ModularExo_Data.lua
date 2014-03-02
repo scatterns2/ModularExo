@@ -1,13 +1,3 @@
-Script.Load("lua/Exo.lua")
-Script.Load("lua/Weapons/Marine/Minigun.lua")
-Script.Load("lua/Weapons/Marine/Railgun.lua")
-Script.Load("lua/Weapons/Marine/Claw.lua")
-
-Script.Load("lua/ModularExo_ExoScanner.lua")
-Script.Load("lua/Weapons/Marine/ModularExo_ExoWeaponHolder.lua")
-Script.Load("lua/Weapons/Marine/ModularExo_ExoFlamer.lua")
-Script.Load("lua/Weapons/Marine/ModularExo_ExoWelder.lua")
-Script.Load("lua/Weapons/Marine/ModularExo_ExoShield.lua")
 
 -- The categories of modules
 kExoModuleCategories = enum{

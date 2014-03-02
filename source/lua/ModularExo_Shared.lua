@@ -1,7 +1,7 @@
-
-Script.Load("lua/ModularExo_Data.lua")
-
-Script.Load("lua/ModularExo_NetworkMessages.lua")
+Script.Load("lua/Exo.lua")
+Script.Load("lua/Weapons/Marine/Minigun.lua")
+Script.Load("lua/Weapons/Marine/Railgun.lua")
+Script.Load("lua/Weapons/Marine/Claw.lua")
 
 Script.Load("lua/ModularExo_Exo.lua")
 Script.Load("lua/ModularExo_Exosuit.lua")
@@ -9,8 +9,14 @@ Script.Load("lua/ModularExo_Marine.lua")
 Script.Load("lua/ModularExo_PrototypeLab.lua")
 
 Script.Load("lua/ModularExo_ExoScanner.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_ExoWeaponHolder.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_ExoFlamer.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_ExoWelder.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_ExoShield.lua")
 
+Script.Load("lua/ModularExo_Data.lua")
 
+Script.Load("lua/ModularExo_NetworkMessages.lua")
 
 -- Exo config utilities
 
