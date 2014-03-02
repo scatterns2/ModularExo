@@ -37,21 +37,19 @@ function ModularExo_FindExoSpawnPoint(self)
 end
 
 function ModularExo_HandleExoModularBuy(self, message)
-    
-    local exoConfig = {}
-    exoConfig[kExoModuleSlots.LeftArm] = message.leftArmModuleType
-    exoConfig[kExoModuleSlots.RightArm] = message.rightArmModuleType
-    exoConfig[kExoModuleSlots.PowerSupply] = message.powerModuleType
-    exoConfig[kExoModuleSlots.Armor] = message.armorModuleType
-    exoConfig[kExoModuleSlots.Utility] = message.utilityModuleType
+    local exoConfig = ModularExo_ConvertNetMessageToConfig(message)
     
     local isValid, badReason, resCost = ModularExo_GetIsConfigValid(exoConfig)
-    
     if not isValid or resCost > self:GetResources() then
         return
     end
     
-    self:AddResources(-resCost)
+    local discount = 0
+    if self:isa("Exo") then
+        local isValid, badReason, resCost = ModularExo_GetIsConfigValid(ModularExo_ConvertNetMessageToConfig(self))
+        discount = resCost
+    end
+    self:AddResources(-resCost+discount)
     
     local spawnPoint = ModularExo_FindExoSpawnPoint(self)
     if spawnPoint == nil then
@@ -62,15 +60,8 @@ function ModularExo_HandleExoModularBuy(self, message)
     for i = 1, #weapons do            
         weapons[i]:SetParent(nil)            
     end
-    
-    local exoVariables = {
-        leftArmModuleType = message.leftArmModuleType,
-        rightArmModuleType = message.rightArmModuleType,
-    }
-    if message.armorModuleType and message.armorModuleType ~= kExoModuleTypes.None then
-        exoVariables.armorBonus = kExoModuleTypesData[message.armorModuleType].armorBonus or 0
-    end
-    exoVariables.armorBonus = exoVariables.armorBonus or 0
+    Print("WTF %s", tostring(message.utilityModuleType))
+    local exoVariables = message
     
     local exo = self:Replace(Exo.kMapName, self:GetTeamNumber(), false, spawnPoint, exoVariables)
     exo.prevPlayerMapName = self:GetMapName()

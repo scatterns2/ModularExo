@@ -4,5 +4,6 @@ function PrototypeLab:GetItemList(forPlayer)
     if forPlayer:isa("Exo") then
         return { kTechId.Exosuit }
     end
-    return orig_PrototypeLab_GetItemList(self, forPlayer)
+    return { kTechId.Jetpack, kTechId.Exosuit }
+    --return orig_PrototypeLab_GetItemList(self, forPlayer)
 end

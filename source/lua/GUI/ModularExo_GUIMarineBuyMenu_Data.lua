@@ -1,4 +1,3 @@
-
 Script.Load("lua/GUIMarineBuyMenu.lua")
 
 --[[ (Z = lightning bolt icon, R = res icon)
@@ -130,6 +129,10 @@ local function GetSmallIconPixelCoordinates(itemTechId)
     return 0, y1, smallIconWidth, y2
 end
 
+local function GetBuildIconPixelCoords(techId)
+    local iconX, iconY = GetMaterialXYOffset(techId)
+    return iconX*80, iconY*80, iconX*80+80, iconY*80+80
+end
 
 GUIMarineBuyMenu.kExoModuleData = {
     -- Power modules
@@ -231,15 +234,20 @@ GUIMarineBuyMenu.kExoModuleData = {
     },
     
     -- Utility modules
+    [kExoModuleTypes.Thrusters] = {
+        label = "THRUSTERS", tooltip = "EXO_UTILITY_SCANNER_TOOLTIP",
+        image = "ui/buildmenu.dds",
+        imageTexCoords = {GetBuildIconPixelCoords(kTechId.RootMenu)},
+    },
     [kExoModuleTypes.Scanner] = {
-        label = "EXO_UTILITY_SCANNER", tooltip = "EXO_UTILITY_SCANNER_TOOLTIP",
-        image = kInventoryIconsTexture,
-        imageTexCoords = {GetSmallIconPixelCoordinates(kTechId.Axe)},
+        label = "SCANNER", tooltip = "EXO_UTILITY_SCANNER_TOOLTIP",
+        image = "ui/buildmenu.dds",
+        imageTexCoords = {GetBuildIconPixelCoords(kTechId.Scan)},
     },
     
     [kExoModuleTypes.None] = {
-        label = "None", tooltip = "It appears to be a lot of nothing.",
-        image = kInventoryIconsTexture,
-        imageTexCoords = {GetSmallIconPixelCoordinates(kTechId.LayMines)},
+        label = "NONE", tooltip = "It appears to be a lot of nothing.",
+        image = "ui/buildmenu.dds",
+        imageTexCoords = {GetBuildIconPixelCoords(kTechId.Stop)},
     },
 }

@@ -1,24 +1,4 @@
 
-function GetLocal(originalFunction, k)
-    local index = 1
-    local foundIndex = nil
-    repeat
-        local n, v = debug.getupvalue(originalFunction, index)
-        if not n then
-            break
-        end
-        if n == name then
-            foundIndex = index
-        end
-        Print("?!? %s %s %s %s", tostring(originalFunction), k, index, tostring(foundIndex))
-        index = index + 1
-    until foundIndex
-    if foundIndex then
-        local _, v = debug.getupvalue(originalFunction, foundIndex)
-        return v
-    end
-end
-
 Script.Load("lua/ModularExo_Data.lua")
 
 Script.Load("lua/ModularExo_NetworkMessages.lua")
@@ -43,6 +23,16 @@ Script.Load("lua/ModularExo_ExoScanner.lua")
     }
     Utility slot may be nil (because it's an optional slot).
 ]]
+
+function ModularExo_ConvertNetMessageToConfig(message)
+    return {
+        [kExoModuleSlots.PowerSupply] = message.powerModuleType    or kExoModuleTypes.None,
+        [kExoModuleSlots.LeftArm    ] = message.leftArmModuleType  or kExoModuleTypes.None,
+        [kExoModuleSlots.RightArm   ] = message.rightArmModuleType or kExoModuleTypes.None,
+        [kExoModuleSlots.Armor      ] = message.armorModuleType    or kExoModuleTypes.None,
+        [kExoModuleSlots.Utility    ] = message.utilityModuleType  or kExoModuleTypes.None,
+    }
+end
 
 function ModularExo_ConvertConfigToNetMessage(config)
     return {
@@ -100,8 +90,8 @@ function ModularExo_GetIsConfigValid(config)
         end
     end
     -- Ok, we've iterated over certain module types and it seems OK
-    local exoTexturePath = nil
     
+    local exoTexturePath = nil
     local modelDataForRightArmType = kExoWeaponRightLeftComboModels[rightArmType]
     if not modelDataForRightArmType.isValid then
         -- This means we don't have model data for the situation where the arm type is on the right
@@ -129,4 +119,21 @@ function ModularExo_GetIsConfigValid(config)
     -- Also return the image texture path, in case the GUI needs that!
     return true, nil, resCost, powerSupply, powerCost, exoTexturePath
 end
+
+function ModularExo_GetConfigWeight(config)
+    local weight = 0
+    for slotType, slotTypeData in pairs(kExoModuleSlotsData) do
+        local moduleType = config[slotType]
+        if moduleType and moduleType ~= kExoModuleTypes.None then
+            local moduleTypeData = kExoModuleTypesData[moduleType]
+            if moduleTypeData then
+                weight = weight+(moduleTypeData.weight or 0)
+            end
+        end
+    end
+    return weight
+end
+
+
+
 

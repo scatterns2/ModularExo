@@ -2,7 +2,7 @@
 Script.Load("lua/GUIMarineBuyMenu.lua")
 Script.Load("lua/GUI/ModularExo_GUIMarineBuyMenu_Data.lua")
 
--- may the cretaor forgive me for this code...
+-- may the creator forgive me for this code...
 
 local orig_MarineBuy_GetCosts = MarineBuy_GetCosts
 function MarineBuy_GetCosts(techId)
@@ -37,7 +37,9 @@ GUIMarineBuyMenu.kSlotPanelBackgroundColor = Color(0.1, 0.4, 1, 0.8)
 
 GUIMarineBuyMenu.kSmallModuleButtonSize = GUIScale(Vector(60, 60, 0))
 GUIMarineBuyMenu.kWideModuleButtonSize = GUIScale(Vector(150, 60, 0))
+GUIMarineBuyMenu.kMediumModuleButtonSize = GUIScale(Vector(100, 60, 0))
 GUIMarineBuyMenu.kWeaponImageSize = GUIScale(Vector(80, 40, 0))
+GUIMarineBuyMenu.kUtilityImageSize = GUIScale(Vector(39, 39, 0))
 GUIMarineBuyMenu.kModuleButtonGap = GUIScale(7)
 GUIMarineBuyMenu.kPanelTitleHeight = GUIScale(35)
 
@@ -74,7 +76,6 @@ GUIMarineBuyMenu.kExoSlotData = {
             return self:MakeArmorModuleButton(moduleType, moduleTypeData, offsetX, offsetY)
         end,
     },
-    --[[
     [kExoModuleSlots.Utility] = {
         label = "UTILITY",--label = "EXO_MODULESLOT_UTILITY",
         xp = 1, yp = 0.85, anchorX = GUIItem.Right, gap = GUIMarineBuyMenu.kModuleButtonGap,
@@ -82,7 +83,6 @@ GUIMarineBuyMenu.kExoSlotData = {
             return self:MakeUtilityModuleButton(moduleType, moduleTypeData, offsetX, offsetY)
         end,
     },
-    ]]
 }
 
 local orig_GUIMarineBuyMenu_SetHostStructure = GUIMarineBuyMenu.SetHostStructure
@@ -91,6 +91,24 @@ function GUIMarineBuyMenu:SetHostStructure(hostStructure)
     Print("%s\n", "SetHostStructure")
     if hostStructure:isa("PrototypeLab") then
         Print("%s\n", "PROTOOaaaaO")
+        self:_InitializeExoModularButtons()
+        self:_RefreshExoModularButtons()
+    end
+end
+
+function  GUIMarineBuyMenu:_InitializeExoModularButtons()
+    self.activeExoConfig = nil
+    local player = Client.GetLocalPlayer()
+    if player and player:isa("Exo") then
+        self.activeExoConfig = ModularExo_ConvertNetMessageToConfig(player)
+        local isValid, badReason, resCost, powerSupply = ModularExo_GetIsConfigValid(self.activeExoConfig)
+        self.activeExoConfigResCost = resCost
+        self.activeExoConfigPowerSupply = powerSupply
+        self.exoConfig = self.activeExoConfig
+    else
+        self.activeExoConfig = {}
+        self.activeExoConfigResCost = 0
+        self.activeExoConfigPowerSupply = 0
         self.exoConfig = {
             [kExoModuleSlots.PowerSupply] = kExoModuleTypes.Power1,
             [kExoModuleSlots.RightArm   ] = kExoModuleTypes.Minigun,
@@ -98,12 +116,8 @@ function GUIMarineBuyMenu:SetHostStructure(hostStructure)
             [kExoModuleSlots.Armor      ] = kExoModuleTypes.None,
             [kExoModuleSlots.Utility    ] = kExoModuleTypes.None,
         }
-        self:_InitializeExoModularButtons()
-        self:_RefreshExoModularButtons()
     end
-end
-
-function  GUIMarineBuyMenu:_InitializeExoModularButtons()
+    
     self.modularExoConfigActive = false
     self.modularExoGraphicItemsToDestroyList = {} -- WWHHYY UWE, WWWHHHHYYYYYY?!?!¿!?
     self.modularExoModuleButtonList = {}
@@ -260,7 +274,11 @@ end
 
 function GUIMarineBuyMenu:MakePowerModuleButton(moduleType, moduleTypeData, offsetX, offsetY)
     local moduleTypeGUIDetails = GUIMarineBuyMenu.kExoModuleData[moduleType]
-    
+    local powerSupply = moduleTypeData.powerSupply
+    local disabled = false
+    if powerSupply < self.activeExoConfigPowerSupply then
+        disabled = true
+    end
     local buttonGraphic = GUIManager:CreateGraphicItem()
     table.insert(self.modularExoGraphicItemsToDestroyList, buttonGraphic)
     buttonGraphic:SetSize(GUIMarineBuyMenu.kSmallModuleButtonSize)
@@ -276,7 +294,7 @@ function GUIMarineBuyMenu:MakePowerModuleButton(moduleType, moduleTypeData, offs
     powerSupplyLabel:SetTextAlignmentX(GUIItem.Align_Min)
     powerSupplyLabel:SetTextAlignmentY(GUIItem.Align_Min)
     powerSupplyLabel:SetColor(GUIMarineBuyMenu.kTextColor)
-    powerSupplyLabel:SetText("+"..tostring(moduleTypeData.powerSupply))--(Locale.ResolveString("BUY"))
+    powerSupplyLabel:SetText(disabled and "---" or "+"..tostring(powerSupply-self.activeExoConfigPowerSupply))--(Locale.ResolveString("BUY"))
     buttonGraphic:AddChild(powerSupplyLabel)
     
     local powerIcon = GUIManager:CreateGraphicItem()
@@ -288,6 +306,7 @@ function GUIMarineBuyMenu:MakePowerModuleButton(moduleType, moduleTypeData, offs
     local iconX, iconY = GetMaterialXYOffset(kTechId.PowerSurge)
     powerIcon:SetTexturePixelCoordinates(iconX*80, iconY*80, iconX*80+80, iconY*80+80)
     powerIcon:SetColor(GUIMarineBuyMenu.kTextColor)
+    powerIcon:SetIsVisible(not disabled)
     buttonGraphic:AddChild(powerIcon)
     
     local resCostLabel = GetGUIManager():CreateTextItem()
@@ -298,7 +317,7 @@ function GUIMarineBuyMenu:MakePowerModuleButton(moduleType, moduleTypeData, offs
     resCostLabel:SetTextAlignmentX(GUIItem.Align_Min)
     resCostLabel:SetTextAlignmentY(GUIItem.Align_Max)
     resCostLabel:SetColor(GUIMarineBuyMenu.kTextColor)
-    resCostLabel:SetText(tostring(moduleTypeData.resourceCost))--(Locale.ResolveString("BUY"))
+    resCostLabel:SetText(disabled and "---" or tostring(moduleTypeData.resourceCost-self.activeExoConfigResCost))--(Locale.ResolveString("BUY"))
     buttonGraphic:AddChild(resCostLabel)
     
     local resIcon = GUIManager:CreateGraphicItem()
@@ -308,9 +327,11 @@ function GUIMarineBuyMenu:MakePowerModuleButton(moduleType, moduleTypeData, offs
     resIcon:SetPosition(Vector(GUIMarineBuyMenu.kPadding*0.8, GUIMarineBuyMenu.kPadding*0.15+GUIMarineBuyMenu.kResourceIconHeight*-1, 0))
     resIcon:SetTexture(GUIMarineBuyMenu.kResourceIconTexture)
     resIcon:SetColor(GUIMarineBuyMenu.kTextColor)
+    resIcon:SetIsVisible(not disabled)
     buttonGraphic:AddChild(resIcon)
     
     table.insert(self.modularExoModuleButtonList, { -- we need to keep this list so it can change their colour
+        powerSupply = moduleTypeData.powerSupply,
         slotType = kExoModuleSlots.PowerSupply,
         moduleType = moduleType,
         buttonGraphic = buttonGraphic,
@@ -418,7 +439,7 @@ function GUIMarineBuyMenu:MakeArmorModuleButton(moduleType, moduleTypeData, offs
     powerCostLabel:SetTextAlignmentX(GUIItem.Align_Max)
     powerCostLabel:SetTextAlignmentY(GUIItem.Align_Max)
     powerCostLabel:SetColor(GUIMarineBuyMenu.kTextColor)
-    powerCostLabel:SetText(tostring(moduleTypeData.powerCost))--Locale.ResolveString("BUY"))
+    powerCostLabel:SetText(tostring(moduleTypeData.powerCost or "0"))--Locale.ResolveString("BUY"))
     buttonGraphic:AddChild(powerCostLabel)
     
     local powerIcon = GUIManager:CreateGraphicItem()
@@ -438,10 +459,76 @@ function GUIMarineBuyMenu:MakeArmorModuleButton(moduleType, moduleTypeData, offs
         buttonGraphic = buttonGraphic,
         armorLabel = armorLabel,
         costLabel = powerCostLabel, costIcon = powerIcon,
-        thingsToRecolor = { armorLabel, powerCostLabel, powerIcon},
+        thingsToRecolor = { armorLabel, powerCostLabel, powerIcon },
     })
     
     offsetX = offsetX+GUIMarineBuyMenu.kSmallModuleButtonSize.x
+    return buttonGraphic, offsetX, offsetY
+end
+
+function GUIMarineBuyMenu:MakeUtilityModuleButton(moduleType, moduleTypeData, offsetX, offsetY, slotType)
+    local moduleTypeGUIDetails = GUIMarineBuyMenu.kExoModuleData[moduleType]
+    
+    local buttonGraphic = GUIManager:CreateGraphicItem()
+    table.insert(self.modularExoGraphicItemsToDestroyList, buttonGraphic)
+    buttonGraphic:SetSize(GUIMarineBuyMenu.kMediumModuleButtonSize)
+    buttonGraphic:SetAnchor(GUIItem.Left, GUIItem.Top)
+    buttonGraphic:SetPosition(Vector(offsetX, offsetY, 0))
+    buttonGraphic:SetTexture(GUIMarineBuyMenu.kMenuSelectionTexture)
+    
+    local utilityLabel = GetGUIManager():CreateTextItem()
+    table.insert(self.modularExoGraphicItemsToDestroyList, utilityLabel)
+    utilityLabel:SetFontName(GUIMarineBuyMenu.kFont)
+    utilityLabel:SetPosition(Vector(GUIMarineBuyMenu.kModuleButtonGap*1.7, 0, 0))
+    utilityLabel:SetAnchor(GUIItem.Left, GUIItem.Top)
+    utilityLabel:SetTextAlignmentX(GUIItem.Align_Min)
+    utilityLabel:SetTextAlignmentY(GUIItem.Align_Min)
+    utilityLabel:SetColor(GUIMarineBuyMenu.kTextColor)
+    utilityLabel:SetText(tostring(moduleTypeGUIDetails.label))--(Locale.ResolveString("BUY"))
+    buttonGraphic:AddChild(utilityLabel)
+    
+    local utilityImage = GUIManager:CreateGraphicItem()
+    table.insert(self.modularExoGraphicItemsToDestroyList, utilityImage)
+    utilityImage:SetPosition(Vector(GUIMarineBuyMenu.kWeaponImageSize.x*-0.45, GUIMarineBuyMenu.kWeaponImageSize.y*-1, 0))
+    utilityImage:SetSize(GUIMarineBuyMenu.kUtilityImageSize)
+    utilityImage:SetAnchor(GUIItem.Right, GUIItem.Bottom)
+    utilityImage:SetTexture(moduleTypeGUIDetails.image)
+    utilityImage:SetTexturePixelCoordinates(unpack(moduleTypeGUIDetails.imageTexCoords))
+    utilityImage:SetColor(Color(1, 1, 1, 1))
+    buttonGraphic:AddChild(utilityImage)
+    
+    local powerCostLabel = GetGUIManager():CreateTextItem()
+    table.insert(self.modularExoGraphicItemsToDestroyList, powerCostLabel)
+    powerCostLabel:SetPosition(Vector(GUIMarineBuyMenu.kModuleButtonGap*2.3, -GUIMarineBuyMenu.kPadding*0.5, 0))
+    powerCostLabel:SetFontName(GUIMarineBuyMenu.kFont)
+    powerCostLabel:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+    powerCostLabel:SetTextAlignmentX(GUIItem.Align_Min)
+    powerCostLabel:SetTextAlignmentY(GUIItem.Align_Max)
+    powerCostLabel:SetColor(GUIMarineBuyMenu.kTextColor)
+    powerCostLabel:SetText(tostring(moduleTypeData.powerCost or "0"))--(Locale.ResolveString("BUY"))
+    buttonGraphic:AddChild(powerCostLabel)
+    
+    local powerIcon = GUIManager:CreateGraphicItem()
+    table.insert(self.modularExoGraphicItemsToDestroyList, powerIcon)
+    powerIcon:SetPosition(Vector(GUIMarineBuyMenu.kModuleButtonGap*4.3, -GUIMarineBuyMenu.kPadding*0.5+GUIMarineBuyMenu.kResourceIconHeight * -0.8, 0))
+    powerIcon:SetSize(Vector(GUIMarineBuyMenu.kResourceIconWidth * 0.8, GUIMarineBuyMenu.kResourceIconHeight * 0.8, 0))
+    powerIcon:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+    powerIcon:SetTexture("ui/buildmenu.dds")
+    local iconX, iconY = GetMaterialXYOffset(kTechId.PowerSurge)
+    powerIcon:SetTexturePixelCoordinates(iconX*80, iconY*80, iconX*80+80, iconY*80+80)
+    powerIcon:SetColor(GUIMarineBuyMenu.kTextColor)
+    buttonGraphic:AddChild(powerIcon)
+    
+    table.insert(self.modularExoModuleButtonList, {
+        slotType = kExoModuleSlots.Utility,
+        moduleType = moduleType,
+        buttonGraphic = buttonGraphic,
+        utilityLabel = utilityLabel, utilityImage = utilityImage,
+        costLabel = powerCostLabel, costIcon = powerIcon,
+        thingsToRecolor = { utilityLabel, --[[utilityImage,]] powerCostLabel, powerIcon},
+    })
+    
+    offsetX = offsetX+GUIMarineBuyMenu.kMediumModuleButtonSize.x
     return buttonGraphic, offsetX, offsetY
 end
 
@@ -453,7 +540,7 @@ end
 function GUIMarineBuyMenu:_UpdateExoModularButtons(deltaTime)
     if self.hoveringExo then
         self:_RefreshExoModularButtons()
-        if not MarineBuy_IsResearched(kTechId.Exosuit) or PlayerUI_GetPlayerResources() < self.exoConfigResourceCost then
+        if not MarineBuy_IsResearched(kTechId.Exosuit) or PlayerUI_GetPlayerResources() < self.exoConfigResourceCost-self.activeExoConfigResCost then
             self.modularExoBuyButton:SetColor(Color(1, 0, 0, 1))
             
             self.modularExoBuyButtonText:SetColor(Color(0.5, 0.5, 0.5, 1))
@@ -484,19 +571,22 @@ end
 
 function GUIMarineBuyMenu:_RefreshExoModularButtons()
     local isValid, badReason, resourceCost, powerSupply, powerCost, texturePath = ModularExo_GetIsConfigValid(self.exoConfig)
+    resourceCost = resourceCost or 0
     self.exoConfigResourceCost = resourceCost
-    self.modularExoCostText:SetText(tostring(resourceCost))
+    self.modularExoCostText:SetText(tostring(resourceCost-self.activeExoConfigResCost))
     self.modularExoPowerUsageLabel:SetText(tostring(powerCost).." of "..tostring(powerSupply))
     --self.modularExoWeightLabel
     
     for buttonI, buttonData in ipairs(self.modularExoModuleButtonList) do
         local current = self.exoConfig[buttonData.slotType]
         local col = nil
+        local canAfford = true
         if current == buttonData.moduleType then
-            if PlayerUI_GetPlayerResources() < self.exoConfigResourceCost then
+            if PlayerUI_GetPlayerResources() < self.exoConfigResourceCost-self.activeExoConfigResCost then
                 buttonData.state = "disabled"
-                buttonData.buttonGraphic:SetColor(GUIMarineBuyMenu.kCannotBuyColor)
-                col = GUIMarineBuyMenu.kCannotBuyColor
+                buttonData.buttonGraphic:SetColor(GUIMarineBuyMenu.kDisabledColor)
+                col = GUIMarineBuyMenu.kDisabledColor
+                canAfford = false
             else
                 buttonData.state = "selected"
                 buttonData.buttonGraphic:SetColor(GUIMarineBuyMenu.kEnabledColor)
@@ -506,8 +596,16 @@ function GUIMarineBuyMenu:_RefreshExoModularButtons()
             self.exoConfig[buttonData.slotType] = buttonData.moduleType
             local isValid, badReason, resourceCost, powerSupply, powerCost, texturePath = ModularExo_GetIsConfigValid(self.exoConfig)
             if buttonData.slotType == kExoModuleSlots.PowerSupply then
-                if isValid and PlayerUI_GetPlayerResources() < resourceCost then
-                    isValid = false
+                if isValid then
+                    if buttonData.powerSupply < self.activeExoConfigPowerSupply then
+                        isValid = false
+                    else
+                        resourceCost = resourceCost-self.activeExoConfigResCost
+                        if PlayerUI_GetPlayerResources() < resourceCost then
+                            isValid = false
+                            canAfford = false
+                        end
+                    end
                 elseif badReason == "not enough power" then
                     isValid = true
                     buttonData.forceToDefaultConfig = true
@@ -528,7 +626,10 @@ function GUIMarineBuyMenu:_RefreshExoModularButtons()
             else
                 buttonData.state = "disabled"
                 buttonData.buttonGraphic:SetColor(GUIMarineBuyMenu.kDisabledColor)
-                col = GUIMarineBuyMenu.kCannotBuyColor
+                col = GUIMarineBuyMenu.kDisabledColor
+                if badReason == "not enough power" then
+                    canAfford = false
+                end
             end
             if not isValid and (badReason == "bad model right" or badReason == "bad model left") then
                 col = Color(0.2, 0.2, 0.2, 0.4)
@@ -541,6 +642,10 @@ function GUIMarineBuyMenu:_RefreshExoModularButtons()
         buttonData.col = col
         for thingI, thing in ipairs(buttonData.thingsToRecolor) do
             thing:SetColor(col)
+        end
+        if not canAfford then
+            if buttonData.costLabel then buttonData.costLabel:SetColor(GUIMarineBuyMenu.kCannotBuyColor) end
+            if buttonData.costIcon then buttonData.costIcon:SetColor(GUIMarineBuyMenu.kCannotBuyColor) end
         end
     end
 end
