@@ -9,4 +9,6 @@ local kExoBuyMessage =
 
 }
 
-Shared.RegisterNetworkMessage("ExoModularBuy", kBuyMessage)
+Shared.RegisterNetworkMessage("ExoModularBuy", kExoBuyMessage)
+
+

@@ -21,6 +21,7 @@ function Exo:OnCreate()
     
     self.leftArmModuleType = self.leftArmModuleType or kExoModuleTypes.Claw
     self.rightArmModuleType = self.rightArmModuleType or kExoModuleTypes.Minigun
+    self.armorBonus = self.armorBonus or 0
 end
 
 local orig_Exo_GetCanJump = Exo.GetCanJump 
@@ -55,7 +56,7 @@ function Exo:OnAdjustModelCoords(modelCoords)
 end
 
 function Exo:ProcessExoModularBuyAction(message)
-    HandleExoModularBuy(message)
+    ModularExo_HandleExoModularBuy(self, message)
 end
 
 local orig_Exo_InitExoModel = Exo.InitExoModel
@@ -88,6 +89,21 @@ function Exo:InitWeapons()
     self.inventoryWeight = weaponHolder:GetInventoryWeight(self)
     self:SetActiveWeapon(ExoWeaponHolder.kMapName)
     StartSoundEffectForPlayer(kDeploy2DSound, self)
+end
+
+local origi_Exo_BuyMenu = Exo.BuyMenu
+function Exo:BuyMenu(structure)
+    if self:GetTeamNumber() ~= 0 and Client.GetLocalPlayer() == self then
+        if not self.buyMenu then
+            self.buyMenu = GetGUIManager():CreateGUIScript("GUIModularExoBuyMenu")
+            MarineUI_SetHostStructure(structure)
+            if structure then
+                self.buyMenu:SetHostStructure(structure)
+            end
+            self:TriggerEffects("marine_buy_menu_open")
+            TEST_EVENT("Exo buy menu displayed")
+        end
+    end
 end
 
 

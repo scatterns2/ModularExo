@@ -15,7 +15,7 @@ function ModularExo_FindExoSpawnPoint(self)
     local maxAttempts = 100
     for index = 1, maxAttempts do
     
-        // Find open area nearby to place the big guy.
+        -- Find open area nearby to place the big guy.
         local capsuleHeight, capsuleRadius = self:GetTraceCapsule()
         local extents = Vector(Exo.kXZExtents, Exo.kYExtents, Exo.kXZExtents)
 
@@ -38,33 +38,45 @@ end
 
 function ModularExo_HandleExoModularBuy(self, message)
     
-    local exoVariables = message
-    
     local exoConfig = {}
-    exoConfig[kExoSlots.LeftArm] = message.leftArmModuleType
-    exoConfig[kExoSlots.RightArm] = message.rightArmModuleType
-    exoConfig[kExoSlots.PowerSupply] = message.powerModuleType
-    exoConfig[kExoSlots.Armor] = message.armorModuleType
-    exoConfig[kExoSlots.Utility] = message.utilityModuleType
+    exoConfig[kExoModuleSlots.LeftArm] = message.leftArmModuleType
+    exoConfig[kExoModuleSlots.RightArm] = message.rightArmModuleType
+    exoConfig[kExoModuleSlots.PowerSupply] = message.powerModuleType
+    exoConfig[kExoModuleSlots.Armor] = message.armorModuleType
+    exoConfig[kExoModuleSlots.Utility] = message.utilityModuleType
     
-    if not Exo_Modular_GetIsConfigValid(exoConfig) then
+    local isValid, badReason, resCost = ModularExo_GetIsConfigValid(exoConfig)
+    
+    if not isValid or resCost > self:GetResources() then
         return
     end
     
-    local spawnPoint = FindExoSpawnPoint(self)
+    self:AddResources(-resCost)
+    
+    local spawnPoint = ModularExo_FindExoSpawnPoint(self)
     if spawnPoint == nil then
         return
     end
     
-    
-    self:AddResources(-GetCostForTech(techId))
     local weapons = self:GetWeapons()
     for i = 1, #weapons do            
         weapons[i]:SetParent(nil)            
     end
     
+    local exoVariables = {
+        leftArmModuleType = message.leftArmModuleType,
+        rightArmModuleType = message.rightArmModuleType,
+    }
+    if message.armorModuleType and message.armorModuleType ~= kExoModuleTypes.None then
+        exoVariables.armorBonus = kExoModuleTypesData[message.armorModuleType].armorBonus or 0
+    end
+    exoVariables.armorBonus = exoVariables.armorBonus or 0
+    
     local exo = self:Replace(Exo.kMapName, self:GetTeamNumber(), false, spawnPoint, exoVariables)
-    StorePrevPlayer(self, exo)        
+    exo.prevPlayerMapName = self:GetMapName()
+    exo.prevPlayerHealth = self:GetHealth()
+    exo.prevPlayerMaxArmor = self:GetMaxArmor()
+    exo.prevPlayerArmor = self:GetArmor()      
     
     if not exo then
         return

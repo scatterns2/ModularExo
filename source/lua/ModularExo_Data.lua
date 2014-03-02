@@ -65,11 +65,11 @@ kExoModuleTypes = enum{
     "Power5",
     "Power6",
     "Claw",
+    "Welder",
+    "Shield",
     "Minigun",
     "Railgun",
-    "Welder",
     "Flamethrower",
-    "Shield",
     "Armor1",
     "Armor2",
     "Armor3",
@@ -91,32 +91,32 @@ kExoModuleTypesData = {
     -- Power modules
     [kExoModuleTypes.Power1] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 15,
+        powerSupply = 20,
         resourceCost = 20,
     },
     [kExoModuleTypes.Power2] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 20,
+        powerSupply = 25,
         resourceCost = 30,
     },
     [kExoModuleTypes.Power3] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 25,
+        powerSupply = 30,
         resourceCost = 40,
     },
     [kExoModuleTypes.Power4] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 30,
+        powerSupply = 40,
         resourceCost = 50,
     },
     [kExoModuleTypes.Power5] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 40,
+        powerSupply = 50,
         resourceCost = 60,
     },
 	[kExoModuleTypes.Power6] = {
         category = kExoModuleCategories.PowerSupply,
-        powerSupply = 50,
+        powerSupply = 60,
         resourceCost = 70,
     },
     
@@ -129,13 +129,13 @@ kExoModuleTypesData = {
     },
     [kExoModuleTypes.Welder] = {
         category = kExoModuleCategories.Weapon,
-        powerCost = 15,
+        powerCost = 10,
         mapName = ExoWelder.kMapName,
         armType = kExoArmTypes.Railgun,
     }, 
     [kExoModuleTypes.Shield] = {
         category = kExoModuleCategories.Weapon,
-        powerCost = 15,
+        powerCost = 10,
         mapName = ExoShield.kMapName,
         armType = kExoArmTypes.Claw,
     },     
@@ -153,7 +153,7 @@ kExoModuleTypesData = {
     },
     [kExoModuleTypes.Flamethrower] = {
         category = kExoModuleCategories.Weapon,
-        powerCost = 15,
+        powerCost = 20,
         mapName = ExoFlamer.kMapName,
         armType = kExoArmTypes.Railgun,
     },
@@ -161,18 +161,18 @@ kExoModuleTypesData = {
     -- Armor modules
     [kExoModuleTypes.Armor1] = {
         category = kExoModuleCategories.Armor,
-        powerCost = 3,
+        powerCost = 5,
         armorBonus = 100,
     },
     [kExoModuleTypes.Armor2] = {
         category = kExoModuleCategories.Armor,
-        powerCost = 3,
-        armorBonus = 100,
+        powerCost = 10,
+        armorBonus = 200,
     },
 	[kExoModuleTypes.Armor3] = {
         category = kExoModuleCategories.Armor,
-        powerCost = 3,
-        armorBonus = 100,
+        powerCost = 15,
+        armorBonus = 300,
     },
     
     -- Damage modules (unused)
@@ -203,6 +203,7 @@ kExoModuleTypesData = {
 -- Model data for weapon combos (data[rightArmType][leftArmType])
 kExoWeaponRightLeftComboModels = {
     [kExoArmTypes.Minigun] = {
+        isValid = true,
         [kExoArmTypes.Minigun] = {
             isValid = true,
             worldModel = "models/marine/exosuit/exosuit_mm.model",
@@ -222,6 +223,7 @@ kExoWeaponRightLeftComboModels = {
         },
     },
     [kExoArmTypes.Railgun] = {
+        isValid = true,
         [kExoArmTypes.Minigun] = {
             isValid = false,
         },
@@ -231,7 +233,6 @@ kExoWeaponRightLeftComboModels = {
             worldAnimGraph  = "models/marine/exosuit/exosuit_rr.animation_graph",
             viewModel  = "models/marine/exosuit/exosuit_rr_view.model",
 			viewAnimGraph   = "models/marine/exosuit/exosuit_rr_view.animation_graph",
-
         },
         [kExoArmTypes.Claw] = {
             isValid = true,
@@ -239,10 +240,10 @@ kExoWeaponRightLeftComboModels = {
             worldAnimGraph  = "models/marine/exosuit/exosuit_cr.animation_graph",
             viewModel  = "models/marine/exosuit/exosuit_cr_view.model",
 			viewAnimGraph   = "models/marine/exosuit/exosuit_cr_view.animation_graph",
-
         },
     },
     [kExoArmTypes.Claw] = {
+        isValid = false,
         [kExoArmTypes.Minigun] = {
             isValid = false,
         },
