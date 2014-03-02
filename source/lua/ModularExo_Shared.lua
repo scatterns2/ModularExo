@@ -4,6 +4,7 @@ Script.Load("lua/ModularExo_Data.lua")
 Script.Load("lua/ModularExo_NetworkMessages.lua")
 
 Script.Load("lua/ModularExo_Exo.lua")
+Script.Load("lua/ModularExo_Exosuit.lua")
 Script.Load("lua/ModularExo_Marine.lua")
 Script.Load("lua/ModularExo_PrototypeLab.lua")
 
@@ -62,7 +63,7 @@ function ModularExo_GetIsConfigValid(config)
         else
             -- The config has module type for this slot type
             local moduleTypeData = kExoModuleTypesData[moduleType]
-            if moduleTypeData.category ~= slotTypeData.category then
+            if moduleTypeData == nil or moduleTypeData.category ~= slotTypeData.category then
                 -- They have provided the wrong category of module type for this slot type
                 -- For example, an armor module in a weapon slot
                 return false, "wrong slot type" -- not a valid config

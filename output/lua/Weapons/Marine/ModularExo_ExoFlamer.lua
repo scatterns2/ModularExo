@@ -107,6 +107,23 @@ function ExoFlamer:OnInitialized()
    
 end
 
+
+function ExoFlamer:OnDestroy()
+    Entity.OnDestroy(self)
+    if Server then
+        self.loopingFireSound = nil
+    elseif Client then
+        if self.trailCinematic then
+            Client.DestroyTrailCinematic(self.trailCinematic)
+            self.trailCinematic = nil
+        end
+        if self.pilotCinematic then
+            Client.DestroyCinematic(self.pilotCinematic)
+            self.pilotCinematic = nil
+        end
+    end
+end
+
 function ExoFlamer:OnUpdateAnimationInput(modelMixin)
 
  PROFILE("ExoWelder:OnUpdateAnimationInput")
@@ -119,16 +136,19 @@ function ExoFlamer:OnUpdateAnimationInput(modelMixin)
 	
 end
 
+function Minigun:ModifyMaxSpeed(maxSpeedTable)
+    if self.isShooting then
+        maxSpeedTable.maxSpeed = maxSpeedTable.maxSpeed * kMinigunMovementSlowdown
+    end
+end
 
 function ExoFlamer:GetIsAffectedByWeaponUpgrades()
     return false
 end
 
 function ExoFlamer:CreatePrimaryAttackEffect(player)
-
     -- Remember this so we can update gun_loop pose param
     self.timeOfLastPrimaryAttack = Shared.GetTime()
-
 end
 
 function ExoFlamer:GetRange()
@@ -450,7 +470,7 @@ function ExoFlamer:OnPrimaryAttack(player)
 end
 
 function ExoFlamer:GetDeathIconIndex()
-    return kDeathMessageIcon.Welder
+    return kDeathMessageIcon.Flamethrower
 end
 
 function ExoFlamer:OnPrimaryAttackEnd(player)

@@ -1,10 +1,10 @@
-// ======= Copyright (c) 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
-//
-// lua\Weapons\Flamethrower_Client.lua
-//
-//    Created by:   Charlie Cleveland (charlie@unknownworlds.com) 
-//
-// ========= For more information, visit us at http://www.unknownworlds.com =====================
+-- ======= Copyright (c) 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+--
+-- lua\Weapons\Flamethrower_Client.lua
+--
+--    Created by:   Charlie Cleveland (charlie@unknownworlds.com) 
+--
+-- ========= For more information, visit us at http:--www.unknownworlds.com =====================
 
 local kTrailLength = 9.5
 local kImpactEffectRate = 0.3
@@ -49,7 +49,7 @@ local kFadeOutCinematicNames =
 
 local function UpdateSound(self)
 
-    // Only update when held in inventory
+    -- Only update when held in inventory
     if self.loopingSoundEntId ~= Entity.invalidId and self:GetParent() ~= nil then
     
         local player = Client.GetLocalPlayer()
@@ -61,10 +61,10 @@ local function UpdateSound(self)
 
             if soundEnt:GetIsPlaying() and self.lastYaw ~= nil then
             
-                // 180 degree rotation = param of 1
+                -- 180 degree rotation = param of 1
                 local rotateParam = math.abs((yaw - self.lastYaw) / math.pi)
                 
-                // Use the maximum rotation we've set in the past short interval
+                -- Use the maximum rotation we've set in the past short interval
                 if not self.maxRotate or (rotateParam > self.maxRotate) then
                 
                     self.maxRotate = rotateParam
@@ -165,7 +165,7 @@ local kEffectType = enum({'FirstPerson', 'ThirdPerson', 'None'})
 
 function ExoFlamer:OnUpdateRender()
 
-   // Entity.OnUpdateRender(self)
+   -- Entity.OnUpdateRender(self)
 
     local parent = self:GetParent()
     local localPlayer = Client.GetLocalPlayer()
@@ -197,7 +197,7 @@ function ExoFlamer:OnUpdateRender()
     
     end
     
-  //  UpdatePilotEffect(self, effectToLoad == kEffectType.FirstPerson and self.clip > 0 and self:GetIsActive())
+  --  UpdatePilotEffect(self, effectToLoad == kEffectType.FirstPerson and self.clip > 0 and self:GetIsActive())
 
 end
 
@@ -211,7 +211,7 @@ function ExoFlamer:InitTrailCinematic(effectType, player)
     if effectType == kEffectType.FirstPerson then
     
         self.trailCinematic:SetCinematicNames(kFirstPersonTrailCinematics)    
-        // set an attach function which returns the player view coords if we are the local player 
+        -- set an attach function which returns the player view coords if we are the local player 
         
         if self:GetIsRightSlot() then        
             self.trailCinematic:AttachToFunc(self, TRAIL_ALIGN_Z, Vector(-0.85, -0.19, 0.9),
@@ -234,7 +234,7 @@ function ExoFlamer:InitTrailCinematic(effectType, player)
     
         self.trailCinematic:SetCinematicNames(kTrailCinematics)
     
-        // attach to third person fx node otherwise with an X offset since we align it along the X-Axis (the attackpoint is oriented in the model like that)
+        -- attach to third person fx node otherwise with an X offset since we align it along the X-Axis (the attackpoint is oriented in the model like that)
         self.trailCinematic:AttachTo(self, TRAIL_ALIGN_X,  Vector(0.8, 0, 0), player:GetAttachPointIndex("fxnode_rrailgunmuzzle"))
         minHardeningValue = 0.1
         numFlameSegments = 8
@@ -295,7 +295,7 @@ function ExoFlamer:CreateImpactEffect(player)
     
 end
 
-/* disabled, causes bad performance
+--[[ disabled, causes bad performance
 function ExoFlamer:CreateSmokeEffect(player)
 
     if not self.timeLastLightningEffect or self.timeLastLightningEffect + kSmokeEffectRate < Shared.GetTime() then
@@ -316,5 +316,5 @@ function ExoFlamer:CreateSmokeEffect(player)
     end
 
 end
-*/
+]]
 

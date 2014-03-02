@@ -71,14 +71,14 @@ GUIMarineBuyMenu.kExoSlotData = {
     },
     [kExoModuleSlots.Armor] = {
         label = "ARMOR",--label = "EXO_MODULESLOT_ARMOR",
-        xp = 0, yp = 0.85, anchorX = GUIItem.Left, gap = GUIMarineBuyMenu.kModuleButtonGap,
+        xp = 0, yp = 0.77, anchorX = GUIItem.Left, gap = GUIMarineBuyMenu.kModuleButtonGap,
         makeButton = function(self, moduleType, moduleTypeData, offsetX, offsetY)
             return self:MakeArmorModuleButton(moduleType, moduleTypeData, offsetX, offsetY)
         end,
     },
     [kExoModuleSlots.Utility] = {
         label = "UTILITY",--label = "EXO_MODULESLOT_UTILITY",
-        xp = 1, yp = 0.85, anchorX = GUIItem.Right, gap = GUIMarineBuyMenu.kModuleButtonGap,
+        xp = 1, yp = 0.77, anchorX = GUIItem.Right, gap = GUIMarineBuyMenu.kModuleButtonGap,
         makeButton = function(self, moduleType, moduleTypeData, offsetX, offsetY)
             return self:MakeUtilityModuleButton(moduleType, moduleTypeData, offsetX, offsetY)
         end,
@@ -162,7 +162,7 @@ function  GUIMarineBuyMenu:_InitializeExoModularButtons()
     table.insert(self.modularExoGraphicItemsToDestroyList, self.modularExoCostIcon)
     self.modularExoCostIcon:SetSize(Vector(GUIMarineBuyMenu.kResourceIconWidth * 0.8, GUIMarineBuyMenu.kResourceIconHeight * 0.8, 0))
     self.modularExoCostIcon:SetAnchor(GUIItem.Right, GUIItem.Center)
-    self.modularExoCostIcon:SetPosition(Vector(-GUIMarineBuyMenu.kPadding*1, -GUIMarineBuyMenu.kResourceIconHeight*0.4, 0))
+    self.modularExoCostIcon:SetPosition(Vector(-GUIMarineBuyMenu.kPadding*11, -GUIMarineBuyMenu.kResourceIconHeight*0.4, 0))
     self.modularExoCostIcon:SetTexture(GUIMarineBuyMenu.kResourceIconTexture)
     self.modularExoCostIcon:SetColor(GUIMarineBuyMenu.kTextColor)
     self.modularExoBuyButton:AddChild(self.modularExoCostIcon)
@@ -575,7 +575,15 @@ function GUIMarineBuyMenu:_RefreshExoModularButtons()
     self.exoConfigResourceCost = resourceCost
     self.modularExoCostText:SetText(tostring(resourceCost-self.activeExoConfigResCost))
     self.modularExoPowerUsageLabel:SetText(tostring(powerCost).." of "..tostring(powerSupply))
-    --self.modularExoWeightLabel
+    self.exoConfigWeight = ModularExo_GetConfigWeight(self.exoConfig)
+    local weightLabel, weightCol = "?!?", Color(1, 0.7, 0.7, 1)
+    for weightClassI, weightClass in ipairs(GUIMarineBuyMenu.kWeightLabelData) do
+        if self.exoConfigWeight >= weightClass.min then
+            weightLabel, weightCol = weightClass.label, weightClass.col
+        end
+    end
+    self.modularExoWeightLabel:SetText(tostring(weightLabel))
+    self.modularExoWeightLabel:SetColor(weightCol)
     
     for buttonI, buttonData in ipairs(self.modularExoModuleButtonList) do
         local current = self.exoConfig[buttonData.slotType]
@@ -596,15 +604,14 @@ function GUIMarineBuyMenu:_RefreshExoModularButtons()
             self.exoConfig[buttonData.slotType] = buttonData.moduleType
             local isValid, badReason, resourceCost, powerSupply, powerCost, texturePath = ModularExo_GetIsConfigValid(self.exoConfig)
             if buttonData.slotType == kExoModuleSlots.PowerSupply then
-                if isValid then
-                    if buttonData.powerSupply < self.activeExoConfigPowerSupply then
+                if buttonData.powerSupply < self.activeExoConfigPowerSupply then
+                    isValid = false
+                    badReason = "no refunds!"
+                elseif isValid then
+                    resourceCost = resourceCost-self.activeExoConfigResCost
+                    if PlayerUI_GetPlayerResources() < resourceCost then
                         isValid = false
-                    else
-                        resourceCost = resourceCost-self.activeExoConfigResCost
-                        if PlayerUI_GetPlayerResources() < resourceCost then
-                            isValid = false
-                            canAfford = false
-                        end
+                        canAfford = false
                     end
                 elseif badReason == "not enough power" then
                     isValid = true

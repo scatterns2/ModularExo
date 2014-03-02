@@ -1,11 +1,11 @@
-// lua\Weapons\Marine\Welder.lua
-//
-//    Created by:   Andreas Urwalek (a_urwa@sbox.tugraz.at)
-//
-//    Weapon used for repairing structures and armor of friendly players (marines, exosuits, jetpackers).
-//    Uses hud slot 3 (replaces axe)
-//
-// ========= For more information, visit us at http://www.unknownworlds.com =====================
+-- lua\Weapons\Marine\Welder.lua
+--
+--    Created by:   Andreas Urwalek (a_urwa@sbox.tugraz.at)
+--
+--    Weapon used for repairing structures and armor of friendly players (marines, exosuits, jetpackers).
+--    Uses hud slot 3 (replaces axe)
+--
+-- ========= For more information, visit us at http:--www.unknownworlds.com =====================
 
 function _D(...)
     local t = {'['..debug.getinfo(2, 'l').currentline..']', ...}
@@ -54,8 +54,8 @@ local kWelderEffectRate = 0.45
 local kFireLoopingSound = PrecacheAsset("sound/NS2.fev/marine/welder/weld")
 
 local kHealScoreAdded = 2
-// Every kAmountHealedForPoints points of damage healed, the player gets
-// kHealScoreAdded points to their score.
+-- Every kAmountHealedForPoints points of damage healed, the player gets
+-- kHealScoreAdded points to their score.
 local kAmountHealedForPoints = 600
 
 function ExoWelder:OnCreate()
@@ -64,7 +64,7 @@ function ExoWelder:OnCreate()
     
     
     
-    //InitMixin(self, LiveMixin)
+    --InitMixin(self, LiveMixin)
     InitMixin(self, ExoWeaponSlotMixin)
 
     self.loopingSoundEntId = Entity.invalidId
@@ -74,7 +74,7 @@ function ExoWelder:OnCreate()
     
         self.loopingFireSound = Server.CreateEntity(SoundEffect.kMapName)
         self.loopingFireSound:SetAsset(kFireLoopingSound)
-        // SoundEffect will automatically be destroyed when the parent is destroyed (the Welder).
+        -- SoundEffect will automatically be destroyed when the parent is destroyed (the Welder).
         self.loopingFireSound:SetParent(self)
         self.loopingSoundEntId = self.loopingFireSound:GetId()
         
@@ -126,7 +126,7 @@ function ExoWelder:OnPrimaryAttack(player)
     
     if not self.welding then
     
-       // self:TriggerEffects("welder_start")
+       -- self:TriggerEffects("welder_start")
         self.timeWeldStarted = Shared.GetTime()
         
         if Server then
@@ -195,16 +195,16 @@ function ExoWelder:GetRange()
     return kWeldRange
 end	
 
-//function ExoWelder:GetRepairRate(repairedEntity)
+--function ExoWelder:GetRepairRate(repairedEntity)
 
-  //  local repairRate = kPlayerWeldRate
- //   if repairedEntity.GetReceivesStructuralDamage and repairedEntity:GetReceivesStructuralDamage() then
-    //    repairRate = kStructureWeldRate
-  //  end
+  --  local repairRate = kPlayerWeldRate
+ --   if repairedEntity.GetReceivesStructuralDamage and repairedEntity:GetReceivesStructuralDamage() then
+    --    repairRate = kStructureWeldRate
+  --  end
     
-   // return repairRate
+   -- return repairRate
     
-//end
+--end
 
 function ExoWelder:GetMeleeBase()
     return 2, 2
@@ -214,10 +214,10 @@ function ExoWelder:GetMeleeOffset()
     return 0.0
 end
 
-//local function PrioritizeDamagedFriends(weapon, player, newTarget, oldTarget)
- //    _D("WTF", weapon, player)
-  //  return not oldTarget or (HasMixin(newTarget, "Team") and newTarget:GetTeamNumber() == player:GetTeamNumber() and (HasMixin(newTarget, "Weldable") and newTarget:GetCanBeWelded(player)))
-//end
+--local function PrioritizeDamagedFriends(weapon, player, newTarget, oldTarget)
+ --    _D("WTF", weapon, player)
+  --  return not oldTarget or (HasMixin(newTarget, "Team") and newTarget:GetTeamNumber() == player:GetTeamNumber() and (HasMixin(newTarget, "Weldable") and newTarget:GetCanBeWelded(player)))
+--end
 
 local function PrioritizeDamagedFriends(weapon, player, newTarget, oldTarget)
     return true
@@ -228,14 +228,14 @@ function ExoWelder:PerformWeld(player)
 
     local attackDirection = player:GetViewCoords().zAxis
     local success = false
-    // prioritize friendlies
+    -- prioritize friendlies
     local didHit, target, endPoint, direction, surface = CheckMeleeCapsule(self, player, 0, self:GetRange(), nil, true, 1, PrioritizeDamagedFriends, nil, PhysicsMask.Flame)
     
     if didHit and target and HasMixin(target, "Live") then
         
         if HasMixin(target, "Team")and GetAreEnemies(player, target) then
-           // self:DoDamage(kWelderDamagePerSecond * kWelderFireDelay, target, endPoint, attackDirection)
-            //success = true     
+           -- self:DoDamage(kWelderDamagePerSecond * kWelderFireDelay, target, endPoint, attackDirection)
+            --success = true     
          elseif HasMixin(target, "Team") and player:GetTeamNumber() == target:GetTeamNumber() and HasMixin(target, "Weldable") then
 
         
@@ -244,7 +244,7 @@ function ExoWelder:PerformWeld(player)
                 local prevHealthScalar = target:GetHealthScalar()
                 local prevHealth = target:GetHealth()
                 local prevArmor = target:GetArmor()
-               // target:OnWeld(self, kWelderFireDelay, player)
+               -- target:OnWeld(self, kWelderFireDelay, player)
                  if target:GetCanBeWelded(player) then
                     if target.OnWeldOverride then
                         target:OnWeldOverride(player, kWelderFireDelay)
@@ -265,7 +265,7 @@ function ExoWelder:PerformWeld(player)
                     local addAmount = (target:GetHealth() - prevHealth) + (target:GetArmor() - prevArmor)
                     player:AddContinuousScore("WeldHealth", addAmount, kAmountHealedForPoints, kHealScoreAdded)
                     
-                    // weld owner as well
+                    -- weld owner as well
                     player:SetArmor(player:GetArmor() + kWelderFireDelay * kSelfWeldAmount)
                     
                 end
@@ -308,9 +308,9 @@ function ExoWelder:OnUpdateAnimationInput(modelMixin)
  PROFILE("ExoWelder:OnUpdateAnimationInput")
     
     local parent = self:GetParent()
-    //local sprinting = parent ~= nil and HasMixin(parent, "Sprint") and parent:GetIsSprinting()
+    --local sprinting = parent ~= nil and HasMixin(parent, "Sprint") and parent:GetIsSprinting()
     local activity =self.welding  and "primary" or "none"
-    //modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), activity)
+    --modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), activity)
     
 end
 
@@ -329,7 +329,7 @@ function ExoWelder:OnUpdateRender()
 
   PROFILE("ExoWelder:OnUpdateRender")
 
-  //Entity.OnUpdateRender(self)
+  --Entity.OnUpdateRender(self)
     
     if self.ammoDisplayUI then
     

@@ -39,20 +39,27 @@ end
 function ModularExo_HandleExoModularBuy(self, message)
     local exoConfig = ModularExo_ConvertNetMessageToConfig(message)
     
-    local isValid, badReason, resCost = ModularExo_GetIsConfigValid(exoConfig)
-    if not isValid or resCost > self:GetResources() then
-        return
-    end
-    
     local discount = 0
     if self:isa("Exo") then
         local isValid, badReason, resCost = ModularExo_GetIsConfigValid(ModularExo_ConvertNetMessageToConfig(self))
         discount = resCost
     end
-    self:AddResources(-resCost+discount)
+    
+    local isValid, badReason, resCost = ModularExo_GetIsConfigValid(exoConfig)
+    resCost = resCost-discount
+    if resCost < 0 then
+        Print("Invalid exo config: no refunds!")
+        return
+    end
+    if not isValid or resCost > self:GetResources() then
+        Print("Invalid exo config: %s", badReason)
+        return
+    end
+    self:AddResources(-resCost)
     
     local spawnPoint = ModularExo_FindExoSpawnPoint(self)
     if spawnPoint == nil then
+        Print("Could not find exo spawnpoint")
         return
     end
     
@@ -60,21 +67,25 @@ function ModularExo_HandleExoModularBuy(self, message)
     for i = 1, #weapons do            
         weapons[i]:SetParent(nil)            
     end
-    Print("WTF %s", tostring(message.utilityModuleType))
     local exoVariables = message
     
-    local exo = self:Replace(Exo.kMapName, self:GetTeamNumber(), false, spawnPoint, exoVariables)
-    exo.prevPlayerMapName = self:GetMapName()
-    exo.prevPlayerHealth = self:GetHealth()
-    exo.prevPlayerMaxArmor = self:GetMaxArmor()
-    exo.prevPlayerArmor = self:GetArmor()      
+    local exo = self:Replace(Exo.kMapName, self:GetTeamNumber(), false, spawnPoint, exoVariables)     
     
     if not exo then
+        Print("Could make replacement exo entity")
         return
     end
-    
-    for i = 1, #weapons do
-        exo:StoreWeapon(weapons[i])
+    if self:isa("Exo") then
+        exo:SetMaxArmor(self:GetMaxArmor())
+        exo:SetArmor(self:GetArmor())
+    else
+        exo.prevPlayerMapName = self:GetMapName()
+        exo.prevPlayerHealth = self:GetHealth()
+        exo.prevPlayerMaxArmor = self:GetMaxArmor()
+        exo.prevPlayerArmor = self:GetArmor()
+        for i = 1, #weapons do
+            exo:StoreWeapon(weapons[i])
+        end
     end
     
     exo:TriggerEffects("spawn_exo")

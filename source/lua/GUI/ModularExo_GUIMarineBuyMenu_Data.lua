@@ -51,6 +51,12 @@ Script.Load("lua/GUIMarineBuyMenu.lua")
                   0%|         0%+armor panel width|  |100%-utiltiy panel width         |100%
 ]]
 
+GUIMarineBuyMenu.kWeightLabelData = {
+    { min = 0.00, label = "LIGHT" , col = Color(0, 1, 0, 1), },
+    { min = 0.15, label = "MEDIUM", col = Color(1, 1, 0, 1), },
+    { min = 0.30, label = "HEAVY" , col = Color(1, 0, 0, 1), },
+}
+
 --local GetBigIconPixelCoords = GetLocal(GUIMarineBuyMenu._InitializeContent, "GetBigIconPixelCoords")
 --local GetSmallIconPixelCoordinates = GetLocal(GUIMarineBuyMenu._InitializeEquipped, "GetSmallIconPixelCoordinates")
 
