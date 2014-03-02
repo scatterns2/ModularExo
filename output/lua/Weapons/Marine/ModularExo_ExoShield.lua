@@ -86,7 +86,11 @@ function ExoShield:OnUpdateRender()
         end
         self.shieldModelIsViewModel = shouldDisplayAsViewModel
         self.shieldModel = Client.CreateRenderModel(shouldDisplayAsViewModel and RenderScene.Zone_ViewModel or RenderScene.Zone_Default)
-        self.shieldModel:SetModel("models/props/refinery/refinery_crate_01.model")
+        local mdl = "models/props/refinery/refinery_crate_01.model"
+        if math.random() < 2 then
+            mdl = "models/alien/gorge/gorge.model"
+        end
+        self.shieldModel:SetModel(mdl)
         self.shieldModel:SetIsVisible(true)
     end
     
@@ -96,11 +100,11 @@ function ExoShield:OnUpdateRender()
             local coords = viewModel.boneCoords:Get(6-1)
             
             local modelMiddleCoords = Coords.GetIdentity()
-            modelMiddleCoords.origin = Vector(0, -0.15, 0)
+            modelMiddleCoords.origin = Vector(0, 0.05, 0)
             
             coords = coords*modelMiddleCoords
             
-            coords:Scale(0.3)
+            coords:Scale(-0.3)
             
             self.shieldModel:SetCoords(coords)
         end
@@ -111,11 +115,11 @@ function ExoShield:OnUpdateRender()
     coords = coords*player.boneCoords:Get(63-1)
     
     local modelMiddleCoords = Coords.GetIdentity()
-    modelMiddleCoords.origin = Vector(0, -0.15, 0)
+    modelMiddleCoords.origin = Vector(0, 0.05, 0)
     
     coords = coords*modelMiddleCoords
     
-    coords:Scale(0.3)
+    coords:Scale(-0.3)
     if not shouldDisplayAsViewModel then
         self.shieldModel:SetCoords(coords)
     end
@@ -136,7 +140,7 @@ function ExoShield:OnTag(tagName)
 end
 
 function ExoShield:OnUpdateAnimationInput(modelMixin)
-    --modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), self.isShieldActive)
+    modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), self.isShieldActive)
 end
 
 function ExoShield:GetWeight()
