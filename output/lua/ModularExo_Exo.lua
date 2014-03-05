@@ -74,7 +74,7 @@ end
 
 local orig_Exo_GetCanJump = Exo.GetCanJump 
 function Exo:GetCanJump()
-	return not self.hasThrusters
+	return not self.hasThrusters and not self:GetIsWebbed() and  self:GetIsOnGround()
 end
 
 local orig_Exo_GetIsThrusterAllowed = Exo.GetIsThrusterAllowed

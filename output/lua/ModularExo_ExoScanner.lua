@@ -4,7 +4,7 @@ Script.Load("lua/MapBlipMixin.lua")
 
 class 'ExoScanner' (Entity)
 
-ExoScanner.kMapName = "ExoScanner"
+ExoScanner.kMapName = "exoscanner"
 
 ExoScanner.kScanEffect = PrecacheAsset("cinematics/marine/observatory/scan.cinematic")
 ExoScanner.kScanSound = PrecacheAsset("sound/NS2.fev/marine/commander/scan")

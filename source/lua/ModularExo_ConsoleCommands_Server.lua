@@ -55,7 +55,8 @@ do
         if ver ~= VVV then return end
         local s = ...
         local f = assert(io.open("lua/"..s..".lua"))
-        assert(loadstring(f:read("*a")))()
+        local res, err = loadstring(f:read("*a"))
         f:close()
+        assert(res, err)()
     end)
 end

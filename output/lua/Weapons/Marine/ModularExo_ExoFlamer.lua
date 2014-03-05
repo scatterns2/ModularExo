@@ -23,6 +23,10 @@ class 'ExoFlamer' (Entity)
 ExoFlamer.kMapName = "exoflamer"
 
 local kConeWidth = 0.17
+ExoFlamer.kFireRate = 1/3
+local kCoolDownRate = 0.4
+local kDualGunHeatUpRate = 0.1
+local kHeatUpRate = 0.2
 
 
 if Client then
@@ -32,21 +36,18 @@ end
 ExoFlamer.kMapName = "exoflamer"
 
 ExoFlamer.kModelName = PrecacheAsset("models/marine/flamethrower/flamethrower.model")
---local kViewModels = GenerateMarineViewModelPaths("famethrower")
 local kAnimationGraph = PrecacheAsset("models/marine/flamethrower/flamethrower_view.animation_graph")
-
-
-
+local kFireLoopingSound = PrecacheAsset("sound/NS2.fev/marine/flamethrower/attack_loop")
 
 local networkVars =
 {
-	
     createParticleEffects = "boolean",
     animationDoneTime = "float",
     range = "integer (0 to 11)",
     isShooting = "boolean",
     loopingSoundEntId = "entityid",
-
+    heatAmount = "float (0 to 1 by 0.01)",
+    overheated = "private boolean",
 }
 
 AddMixinNetworkVars(ExoWeaponSlotMixin, networkVars)
@@ -55,14 +56,9 @@ AddMixinNetworkVars(TechMixin, networkVars)
 AddMixinNetworkVars(TeamMixin, networkVars)
 AddMixinNetworkVars(PointGiverMixin, networkVars)
 
-
-local kFireLoopingSound = PrecacheAsset("sound/NS2.fev/marine/flamethrower/attack_loop")
-
-
-
 function ExoFlamer:OnCreate()
-
-   Entity.OnCreate(self)
+    Entity.OnCreate(self)
+    
 	self.lastAttackApplyTime = 0
 
 	self.isShooting = false
@@ -78,10 +74,10 @@ function ExoFlamer:OnCreate()
     self.timeLastWeld = 0
     self.loopingSoundEntId = Entity.invalidId
 	self.range = 9
-
+    self.heatAmount = 0
+    self.overheated = false
 
     if Server then
-
         self.lastAttackApplyTime = 0
 
 		self.createParticleEffects = false
@@ -90,21 +86,15 @@ function ExoFlamer:OnCreate()
         -- SoundEffect will automatically be destroyed when the parent is destroyed (the Welder).
         self.loopingFireSound:SetParent(self)
         self.loopingSoundEntId = self.loopingFireSound:GetId()
-        
     elseif Client then
-    
         self:SetUpdates(true)
         self.lastAttackEffectTime = 0.0
         self.lastAttackApplyTime = 0
     end
-    
 end
 
 function ExoFlamer:OnInitialized()
-
     Entity.OnInitialized(self)
-    
-   
 end
 
 
@@ -121,22 +111,22 @@ function ExoFlamer:OnDestroy()
             Client.DestroyCinematic(self.pilotCinematic)
             self.pilotCinematic = nil
         end
+        if self.heatDisplayUI then
+    
+        Client.DestroyGUIView(self.heatDisplayUI)
+        self.heatDisplayUI = nil
+        end
     end
 end
 
 function ExoFlamer:OnUpdateAnimationInput(modelMixin)
-
- PROFILE("ExoWelder:OnUpdateAnimationInput")
-    
+    PROFILE("ExoFlamer:OnUpdateAnimationInput")
     local parent = self:GetParent()
-    --local sprinting = parent ~= nil and HasMixin(parent, "Sprint") and parent:GetIsSprinting()
-    local activity =self.isShooting  and "primary" or "none"
-       -- modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), activity)
-
-	
+    local activity = self.isShooting  and "primary" or "none"
+    -- modelMixin:SetAnimationInput("activity_" .. self:GetExoWeaponSlotName(), activity)
 end
 
-function Minigun:ModifyMaxSpeed(maxSpeedTable)
+function ExoFlamer:ModifyMaxSpeed(maxSpeedTable)
     if self.isShooting then
         maxSpeedTable.maxSpeed = maxSpeedTable.maxSpeed * kMinigunMovementSlowdown
     end
@@ -236,10 +226,8 @@ end
 
 
 local function ApplyConeDamage(self, player)
-    
     local eyePos  = player:GetEyePos()    
     local ents = {}
-
 
     local fireDirection = player:GetViewCoords().zAxis
     local extents = Vector(kConeWidth, kConeWidth, kConeWidth)
@@ -249,7 +237,6 @@ local function ApplyConeDamage(self, player)
     local filterEnts = {self, player}
     
     for i = 1, 20 do
-    
         if remainingRange <= 0 then
             break
         end
@@ -264,46 +251,34 @@ local function ApplyConeDamage(self, player)
         end
         
         if trace.fraction ~= 1 then
-        
             if trace.entity then
-            
                 if HasMixin(trace.entity, "Live") then
                     table.insertunique(ents, trace.entity)
                 end
-                
                 table.insertunique(filterEnts, trace.entity)
-                
             else
             
                 -- Make another trace to see if the shot should get deflected.
                 local lineTrace = Shared.TraceRay(startPoint, startPoint + remainingRange * fireDirection, CollisionRep.Damage, PhysicsMask.Flame, EntityFilterOne(player))
                 
                 if lineTrace.fraction < 0.8 then
-                
                     fireDirection = fireDirection + trace.normal * 0.55
                     fireDirection:Normalize()
-                    
                     if Server then
                         CreateFlame(self, player, lineTrace.endPoint, lineTrace.normal, fireDirection)
                     end
-                    
                 end
                 
                 remainingRange = remainingRange - (trace.endPoint - startPoint):GetLength()
                 startPoint = trace.endPoint -- + fireDirection * kConeWidth * 2
-                
             end
-        
         else
             break
         end
-
     end
     
     for index, ent in ipairs(ents) do
-    
         if ent ~= player then
-        
             local toEnemy = GetNormalizedVector(ent:GetModelOrigin() - eyePos)
             local health = ent:GetHealth()
             
@@ -321,21 +296,15 @@ local function ApplyConeDamage(self, player)
             if Server and ent:isa("Alien") then
                 ent:CancelEnzyme()
             end
-            
         end
-    
     end
-
 end
 
 
 function ExoFlamer:GetBarrelPoint()
-
     local player = self:GetParent()
     if player then
-    
 		if Client and player:GetIsLocalPlayer() then
-        
             local origin = player:GetEyePos()
             local viewCoords = player:GetViewCoords()
             
@@ -343,10 +312,8 @@ function ExoFlamer:GetBarrelPoint()
                 return origin + viewCoords.zAxis * 0.9 + viewCoords.xAxis * 0.65 + viewCoords.yAxis * -0.19
             else
                 return origin + viewCoords.zAxis * 0.9 + viewCoords.xAxis * -0.65 + viewCoords.yAxis * -0.19
-            end    
-        
+            end
         else
-    
             local origin = player:GetEyePos()
             local viewCoords = player:GetViewCoords()
             
@@ -355,17 +322,12 @@ function ExoFlamer:GetBarrelPoint()
             else
                 return origin + viewCoords.zAxis * 0.9 + viewCoords.xAxis * -0.35 + viewCoords.yAxis * -0.15
             end
-            
-        end    
-        
+        end
     end
-    
     return self:GetOrigin()
-    
 end
 
 local function ShootFlame(self, player)
-
     local viewAngles = player:GetViewAngles()
     local viewCoords = viewAngles:GetCoords()
     
@@ -380,7 +342,6 @@ local function ShootFlame(self, player)
     end
     
     if trace.endPoint ~= endPoint and trace.entity == nil then
-    
         local angles = Angles(0,0,0)
         angles.yaw = GetYawFromVector(trace.normal)
         angles.pitch = GetPitchFromVector(trace.normal) + (math.pi/2)
@@ -388,13 +349,11 @@ local function ShootFlame(self, player)
         local normalCoords = angles:GetCoords()
         normalCoords.origin = trace.endPoint
         range = range - 3
-        
     end
     
     ApplyConeDamage(self, player)
     
     TEST_EVENT("Flamethrower primary attack")
-    
 end
 
 function ExoFlamer:FirePrimary(player, bullets, range, penetration)
@@ -402,71 +361,67 @@ function ExoFlamer:FirePrimary(player, bullets, range, penetration)
 end
 
 function ExoFlamer:OnTag(tagName)
-
     PROFILE("ExoWelder:OnTag")
-              
     if not self:GetIsLeftSlot() then
-    
-    if    tagName == "deploy_end" then
+        if tagName == "deploy_end" then
             self.deployed = true
-     end
+        end
+    end
+end
+
+function ExoFlamer:OnPrimaryAttack(player)
+    PROFILE("ExoFlamer:OnPrimaryAttack")
+    if not self.isShooting and not self.overheated then
+        if not self.createParticleEffects then
+            if self:GetIsLeftSlot() then
+                player:TriggerEffects("leftexoflamer_muzzle")
+            elseif self:GetIsRightSlot() then
+                player:TriggerEffects("rightexoflamer_muzzle")  
+            end        
+        end
+        self.createParticleEffects = true
+        if Server and not self.loopingFireSound:GetIsPlaying() then
+            self.loopingFireSound:Start()
+        end
+    end
+    
+    self.isShooting = true
+	if Client and self.createParticleEffects and self.lastAttackEffectTime + self.kFireRate < Shared.GetTime() then
+		player:TriggerEffects("exoflamer_muzzle")
+        self.lastAttackEffectTime = Shared.GetTime()
+    end
+	if  self.lastAttackApplyTime  + 0.5 < Shared.GetTime() then
+		ShootFlame(self, player)
+        self.lastAttackApplyTime  = Shared.GetTime()
+    end
+end
+
+local function UpdateOverheated(self, player)
+
+    if not self.overheated and self.heatAmount == 1 then
+    
+        self.overheated = true
+       // self:OnPrimaryAttackEnd(player)
         
+       /* if self:GetIsLeftSlot() then
+            player:TriggerEffects("minigun_overheated_left")
+        elseif self:GetIsRightSlot() then    
+            player:TriggerEffects("minigun_overheated_right")
+        end    */
+        
+        StartSoundEffectForPlayer(kOverheatedSoundName, player)
+        
+    end
+    
+    if self.overheated and self.heatAmount == 0 then
+        self.overheated = false
     end
     
 end
 
-function ExoFlamer:OnPrimaryAttack(player)
+function ExoFlamer:AddHeat(amount)
+    self.heatAmount = self.heatAmount + amount
 
-       
-     PROFILE("ExoFlamer:OnPrimaryAttack")
-     
-      --  Entity.OnPrimaryAttack(self, player)
-        
-        if not self.isShooting then
-            
-            if not self.createParticleEffects then
-                
-                if self:GetIsLeftSlot() then
-                    player:TriggerEffects("leftexoflamer_muzzle")
-                elseif self:GetIsRightSlot() then
-                    player:TriggerEffects("rightexoflamer_muzzle")  
-                end        
-            end
-        
-            self.createParticleEffects = true
-            
-            if Server and not self.loopingFireSound:GetIsPlaying() then
-                self.loopingFireSound:Start()
-            end
-            
-        end
-        
-        self.isShooting = true
-		
-		if Client and self.createParticleEffects and self.lastAttackEffectTime + 0.5 < Shared.GetTime() then
-            
-			player:TriggerEffects("exoflamer_muzzle")
-            self.lastAttackEffectTime = Shared.GetTime()
-
-        end
-
-		 if  self.lastAttackApplyTime  + 0.5 < Shared.GetTime() then
-            
-			ShootFlame(self, player)
-            self.lastAttackApplyTime  = Shared.GetTime()
-
-        end
-		
-        -- Fire the cool flame effect periodically
-        -- Don't crank the period too low - too many effects slows down the game a lot.
-       
-        
-     -- if self.timeLastWeld + kWelderFireDelay < Shared.GetTime () then
-    --
-       -- self.timeLastWeld = Shared.GetTime()
-        
-	 -- end
-    
 end
 
 function ExoFlamer:GetDeathIconIndex()
@@ -474,49 +429,46 @@ function ExoFlamer:GetDeathIconIndex()
 end
 
 function ExoFlamer:OnPrimaryAttackEnd(player)
-   
-  if self.isShooting then 
-
-    self.createParticleEffects = false
-        
-    if Server then    
-        self.loopingFireSound:Stop()        
+    if self.isShooting then 
+        self.createParticleEffects = false
+        if Server then    
+            self.loopingFireSound:Stop()        
+        end
     end
-   end 
 	self.isShooting = false
-	
 end
 	
 function ExoFlamer:OnReload(player)
-
     if self:CanReload() then
-    
         if Server then
-        
             self.createParticleEffects = false
             self.loopingFireSound:Stop()
-        
         end
-        
         self:TriggerEffects("reload")
         self.reloading = true
-        
     end
-    
 end	
-	
 
-
-	
 function ExoFlamer:ProcessMoveOnWeapon(player, input)
+    local dt = input.time
+    local addAmount = self.isShooting and (dt * kHeatUpRate) or -(dt * kCoolDownRate)
+    self.heatAmount = math.min(1, math.max(0, self.heatAmount + addAmount))
 
+    UpdateOverheated(self, player)
+
+        
 	if self.isShooting then
     
         local exoWeaponHolder = player:GetActiveWeapon()
+        if exoWeaponHolder then
         
+            local otherSlotWeapon = self:GetExoWeaponSlot() == ExoWeaponHolder.kSlotNames.Left and exoWeaponHolder:GetRightSlotWeapon() or exoWeaponHolder:GetLeftSlotWeapon()
+            if otherSlotWeapon and otherSlotWeapon:isa("ExoFlamer") then
+                otherSlotWeapon:AddHeat(dt * kDualGunHeatUpRate)
+            end
+        
+        end
     end
-
-
 end	
 
 function ExoFlamer:GetNotifiyTarget()
@@ -533,20 +485,52 @@ function ExoFlamer:GetRange()
     return self.range
 end	
 
+function ExoFlamer:OnUpdateRender()
 
+
+    local parent = self:GetParent()
+    if parent and parent:GetIsLocalPlayer() then
+    
+    
+        local viewModel = parent:GetViewModelEntity()
+        if viewModel and viewModel:GetRenderModel() then
+        
+            viewModel:InstanceMaterials()
+            viewModel:GetRenderModel():SetMaterialParameter("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)
+            
+        end
+        
+        local heatDisplayUI = self.heatDisplayUI
+        if not heatDisplayUI then
+        
+            heatDisplayUI = Client.CreateGUIView(242, 720)
+            heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "FlamerDisplay.lua")
+            heatDisplayUI:SetTargetTexture("*exo_minigun_" .. self:GetExoWeaponSlotName())
+            self.heatDisplayUI = heatDisplayUI
+            
+        end
+        
+        heatDisplayUI:SetGlobal("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)
+        
+    else
+    
+        if self.heatDisplayUI then
+        
+            Client.DestroyGUIView(self.heatDisplayUI)
+            self.heatDisplayUI = nil
+            
+        end
+    end
+end
 
 function ExoFlamer:UpdateViewModelPoseParameters(viewModel)
     viewModel:SetPoseParam("welder", 1)    
 end
 
 function ExoFlamer:OnUpdatePoseParameters(viewModel)
-
     PROFILE("ExoFlamer:OnUpdatePoseParameters")
     self:SetPoseParam("welder", 1)
-    
 end
-
-
 
 
 GetEffectManager():AddEffectData("FlamerModEffects", {
@@ -566,7 +550,6 @@ GetEffectManager():AddEffectData("FlamerModEffects", {
     },
 })
     
- 
-    
 
 Shared.LinkClassToMap("ExoFlamer", ExoFlamer.kMapName, networkVars)
+

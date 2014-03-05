@@ -8,11 +8,13 @@ Script.Load("lua/ModularExo_Exosuit.lua")
 Script.Load("lua/ModularExo_Marine.lua")
 Script.Load("lua/ModularExo_PrototypeLab.lua")
 
+Script.Load("lua/ModularExo_LiveMixin.lua")
+
 Script.Load("lua/ModularExo_ExoScanner.lua")
-Script.Load("lua/Weapons/Marine/ModularExo_ExoWeaponHolder.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoFlamer.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoWelder.lua")
 Script.Load("lua/Weapons/Marine/ModularExo_ExoShield.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_ExoWeaponHolder.lua")
 
 Script.Load("lua/ModularExo_Data.lua")
 
