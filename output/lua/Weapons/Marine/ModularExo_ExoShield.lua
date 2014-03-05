@@ -9,16 +9,16 @@ class 'ExoShield' (Entity)
 ExoShield.kMapName = "exoshield"
 
 ExoShield.kHeatPerDamage = 0.01
-ExoShield.kHeatIdleDrainRate = 0.4
-ExoShield.kHeatOverheatedDrainRate = 0.3
-ExoShield.kHeatCombatDrainRate = 0.2
+ExoShield.kHeatIdleDrainRate = 0.2
+ExoShield.kHeatOverheatedDrainRate = 0.15
+ExoShield.kHeatCombatDrainRate = 0.1
 ExoShield.kCombatDuration = 1.3
 
 ExoShield.kShieldOnDelay = 0.8
 ExoShield.kShieldToggleDelay = 1 -- prevent spamming
 
-ExoShield.kShieldDistance = 3
-ExoShield.kShieldAngle = math.rad(180)
+ExoShield.kShieldDistance = 2.65
+ExoShield.kShieldAngle = math.rad(100)
 ExoShield.kShieldDepth = 0.10
 ExoShield.kShieldHeight = 2
 ExoShield.kPhysBodyCount = 6
@@ -114,15 +114,20 @@ function ExoShield:UpdateHeat(dt)
     local cooldownRate = (isInCombat and self.kHeatCombatDrainRate or self.kHeatIdleDrainRate)
     if self.heatAmount >= 1 then
         self.overheated = true
+    end
+    if self.overheated then
         self.isShieldDesired = false
         self.shieldChangeTime = Shared.GetTime()
         cooldownRate = self.kHeatOverheatedDrainRate
+        if self.heatAmount < 0.1 then
+            self.overheated = false
+        end
     end
     self.heatAmount = Clamp(self.heatAmount-cooldownRate*dt, 0, 1)
 end
 
 function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, armorUsed, healthUsed, damageType, preventAlert)
-    self.heatAmount = self.heatAmount+self.kHeatPerDamage
+    self.heatAmount = self.heatAmount+self.kHeatPerDamage*damage
     Print("heat: %s", tostring(self.heatAmount))
     self.lastHitTime = Shared.GetTime()
     return false
@@ -236,14 +241,14 @@ function ExoShield:OnUpdateRender()
     self.clawLight:SetIsVisible(self.shieldEffectScalar > 0)
     self.clawLight:SetRadius(10*self.shieldEffectScalar)
     self.clawLight:SetIntensity(100*self.shieldEffectScalar)
-    self.clawLight:SetColor(Color(0, 0.7, 1, 1))
+    self.clawLight:SetColor(LerpColor(Color(0, 0.7, 1, 1), Color(1, 0, 0, 1), self.heatAmount))
     self.clawLight:SetCoords(coords)
     
     local rotAngles = Angles(-math.pi/2, 0, 0)
     coords = coords*rotAngles:GetCoords()
-    coords.xAxis = coords.xAxis*5.00
+    coords.xAxis = coords.xAxis*20.00
     coords.yAxis = coords.yAxis*0.05
-    coords.zAxis = coords.zAxis*5.00
+    coords.zAxis = coords.zAxis*15.00
     self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
     self.shieldModel:SetCoords(coords)
     
