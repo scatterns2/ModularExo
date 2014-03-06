@@ -9,38 +9,42 @@ local foregroundMask = nil
 
 local alertLight = nil
 
+local idleArrow = nil
+
 local time = 0
 
 local kTexture = "models/marine/exosuit/exosuit_view_panel_mini2.dds"
 
-function UpdateOverHeat(dt, heatAmount)
+local offCol = Color(1, 1, 1, 1)
+local onCol = Color(0, 0, 1, 1)
+local combatCol = Color(1, 1, 0, 1)
+local overheatCol1 = Color(1, 0, 0, 1)
+local overheatCol2 = Color(1, 1, 0, 1)
+local overheatPulseRate = 0.3
+
+function UpdateOverHeat(dt, heatAmount, idleHeatAmount, shieldStatus)
 
     PROFILE("GUILeftMinigunDisplay:Update")
     
+    --heatAmount = math.max(0.4, heatAmount)
+    
     foregroundMask:SetSize(Vector(242, 720 * (1 - heatAmount), 0))
     
-    local alertColor = Color(1, 1, 1, 1)
-    if heatAmount > 0.5 then
-    
-        animHeatAmount = animHeatAmount + ((animHeatDir * dt) * 10 * heatAmount)
-        if animHeatAmount > 1 then
-        
-            animHeatAmount = 1
-            animHeatDir = -1
-            
-        elseif animHeatAmount < 0 then
-        
-            animHeatAmount = 0
-            animHeatDir = 1
-            
-        end
-        alertColor = Color(heatAmount, animHeatAmount * (1 - ((heatAmount - 0.5) / 0.5)), 0, 1)
-        
-    end
+    local flash = false
+    local alertColor = (
+            shieldStatus == "off" and offcol
+        or  shieldStatus == "on" and onCol
+        or  shieldStatus == "combat" and combatCol
+        or  shieldStatus == "overheat" and ((time%overheatPulseRate) < overheatPulseRate/2 and overheatCol1 or overheatCol2)
+        or  Color(1, 0.6, 0.6, 1)
+    )
     alertLight:SetColor(alertColor)
     
-    time = time + dt
+    foreground:SetColor(alertColor)
     
+    idleArrow:SetPosition(Vector(720+64, 512-idleHeatAmount*512, 0))
+    
+    time = time + dt
 end
 
 function Initialize()
@@ -56,7 +60,8 @@ function Initialize()
     foreground = GUI.CreateItem()
     foreground:SetSize(Vector(230, 720, 0))
     foreground:SetPosition(Vector(0, 0, 0))
-    foreground:SetTexturePixelCoordinates(300, 0, 512, 512)
+    --foreground:SetTexturePixelCoordinates(300, 0, 512, 512)
+    foreground:SetTexturePixelCoordinates(0, 0, 230, 512)
     foreground:SetTexture(kTexture)
     foreground:SetStencilFunc(GUIItem.Equal)
     
@@ -74,8 +79,15 @@ function Initialize()
     alertLight:SetTexturePixelCoordinates(240, 0, 290, 512)
     alertLight:SetTexture(kTexture)
     
+    idleArrow = GUI.CreateItem()
+    idleArrow:SetSize(Vector(-64, 64, 0))
+    idleArrow:SetPosition(Vector(720+64, 0, 0))
+    idleArrow:SetTexturePixelCoordinates(0, 0, 64, 64)
+    idleArrow:SetTexture("ui/menu/arrow_horiz.dds")
+    
     background:AddChild(foregroundMask)
     background:AddChild(alertLight)
+    background:AddChild(idleArrow)
     
 end
 

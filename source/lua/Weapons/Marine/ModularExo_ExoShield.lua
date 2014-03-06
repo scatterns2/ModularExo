@@ -8,14 +8,27 @@ class 'ExoShield' (Entity)
 
 ExoShield.kMapName = "exoshield"
 
-ExoShield.kHeatPerDamage = 0.01
-ExoShield.kHeatIdleDrainRate = 0.2
-ExoShield.kHeatOverheatedDrainRate = 0.15
+-- shield state: undeployed --*toggle*-> deployed
+--               deployed --*delay*-> active
+--               active --*overheat*-> overheated --*delay*-> deployed
+--               active --*toggle*-> deployed --*delay-> undeployed
+-- combat state: idle --*damage*-> combat --*delay*-> idle
+ExoShield.kHeatPerDamage = 0.002
+
+ExoShield.kHeatUndeployedDrainRate = 0.25
+ExoShield.kHeatActiveDrainRate = 0.2
+ExoShield.kHeatOverheatedDrainRate = 0.2
 ExoShield.kHeatCombatDrainRate = 0.1
 ExoShield.kCombatDuration = 1.3
 
+ExoShield.kIdleBaseHeatMin = 0.0
+ExoShield.kIdleBaseHeatMax = 0.2
+ExoShield.kIdleBaseHeatMaxDelay = 8--30
+ExoShield.kCombatBaseHeatExtra = 0.1
+ExoShield.kOverheatCooldownGoal = 0
+
 ExoShield.kShieldOnDelay = 0.8
-ExoShield.kShieldToggleDelay = 1 -- prevent spamming
+ExoShield.kShieldToggleDelay = 1 -- prevent spamming (should be longer than kShieldOnDelay)
 
 ExoShield.kShieldDistance = 2.3
 ExoShield.kShieldAngle = math.rad(100)
@@ -42,12 +55,13 @@ PhysicsMask.All = CreateMaskExcludingGroups(PhysicsGroup.ShieldGroup)
 --!!!
 
 local networkVars = {
-    isShieldDesired = "private boolean",
-    shieldChangeTime = "private time",
-    lastHitTime = "private time",
-    --isShieldActive = "private boolean",
-    heatAmount = "private float (0 to 1 by 0.01)",
-    overheated = "private boolean",
+    heatAmount = "private float (0 to 1 by 0.01)", -- current shield heat
+    isShieldDesired = "private boolean", -- if the user wants the shield up (click to toggle)
+    isShieldDeployed = "private boolean", -- if the shield is "powered" (may not be active)
+    --isShieldActive = "private boolean", -- if the shield is 
+    isShieldOverheated = "private boolean", -- if the shield is currently cooling down from an overheat
+    shieldDeployChangeTime = "private time", -- the time the shield was deployed/undeployed
+    lastHitTime = "private time", -- the last time damage was done to the shield
 }
 
 --AddMixinNetworkVars(TechMixin, networkVars)
@@ -63,13 +77,17 @@ function ExoShield:OnCreate()
     InitMixin(self, TeamMixin)
     InitMixin(self, ExoWeaponSlotMixin)
     
-    self.isShieldDesired = false
-    self.shieldChangeTime = 0
-    self.lastHitTime = 0
     self.heatAmount = 0
-    self.overheated = false
+    self.isShieldDesired = false
+    self.isShieldDeployed = false
+    self.isShieldOverheated = false
+    self.shieldDeployChangeTime = 0
+    self.lastHitTime = 0
     
     self.isShieldActive = false
+    self.idleHeatAmount = 0
+    self.isInCombat = false
+    
     self.isPhysicsActive = false
     
     if Client then
@@ -83,7 +101,7 @@ end
 function ExoShield:GetTechId() return nil end
 function ExoShield:OnDestroy()
     Entity.OnDestroy(self)
-    
+    self:DestroyPhysics()
     if Client then
         if self.shieldModel then
             Client.DestroyRenderModel(self.shieldModel)
@@ -93,66 +111,94 @@ function ExoShield:OnDestroy()
             Client.DestroyRenderLight(self.clawLight)
             self.clawLight = nil
         end
+        if self.heatDisplayUI then
+            Client.DestroyGUIView(self.heatDisplayUI)
+            self.heatDisplayUI = nil
+        end
     end
 end
 
 function ExoShield:OnPrimaryAttack(player)
-    if not self.isShieldDesired and not self.overheated and Shared.GetTime() > self.shieldChangeTime+self.kShieldToggleDelay then
-        self.isShieldDesired = true
-        self.shieldChangeTime = Shared.GetTime()
+    if not player:GetPrimaryAttackLastFrame() then
+        self.isShieldDesired = not self.isShieldDesired -- toggle desired state
     end
 end
 function ExoShield:OnPrimaryAttackEnd(player)
-    if self.isShieldDesired then
-        self.isShieldDesired = false
-        self.shieldChangeTime = Shared.GetTime()
-    end
+    
 end
 
-function ExoShield:UpdateHeat(dt)
-    local isInCombat = (Shared.GetTime() < self.lastHitTime+self.kCombatDuration)
-    local cooldownRate = (isInCombat and self.kHeatCombatDrainRate or self.kHeatIdleDrainRate)
-    if self.heatAmount >= 1 then
-        self.overheated = true
+function ExoShield:UpdateHeat(dt, shouldSet)
+    self.isInCombat = (Shared.GetTime() < self.lastHitTime+self.kCombatDuration)
+    local cooldownRate = (
+            self.isShieldOverheated and self.kHeatOverheatedDrainRate
+        or  not self.isShieldDeployed and self.kHeatUndeployedDrainRate
+        or  self.isInCombat and self.kHeatCombatDrainRate
+        or  self.kHeatActiveDrainRate
+    )
+    if self.isShieldOverheated and self.heatAmount <= self.kOverheatCooldownGoal then
+        self.isShieldOverheated = false
     end
-    if self.overheated then
-        self.isShieldDesired = false
-        self.shieldChangeTime = Shared.GetTime()
-        cooldownRate = self.kHeatOverheatedDrainRate
-        if self.heatAmount < 0.1 then
-            self.overheated = false
+    local minHeat = 0
+    if self.isShieldDeployed then
+        local baseHeatScalar = Clamp((Shared.GetTime()-self.shieldDeployChangeTime)/self.kIdleBaseHeatMaxDelay, 0, 1)
+        minHeat = minHeat+self.kIdleBaseHeatMin+(self.kIdleBaseHeatMax-self.kIdleBaseHeatMin)*baseHeatScalar
+        if self.isInCombat then
+            minHeat = minHeat+self.kCombatBaseHeatExtra
         end
+        minHeat = Clamp(minHeat+math.sin(Shared.GetTime())*0.06, 0, 1)
     end
-    self.heatAmount = Clamp(self.heatAmount-cooldownRate*dt, 0, 1)
+    self.idleHeatAmount = minHeat
+    
+    if self.heatAmount >= 1 then
+        self.isShieldOverheated = true
+    end
+    if shouldSet then
+        self.heatAmount = Clamp(self.heatAmount-cooldownRate*dt, minHeat, 1)
+    end
 end
 
-function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, armorUsed, healthUsed, damageType, preventAlert)
+
+function ExoShield:AbsorbDamage(damage)
     self.heatAmount = self.heatAmount+self.kHeatPerDamage*damage
-    Print("heat: %s", tostring(self.heatAmount))
+    Print("ouch %s! (%s)", damage, self.heatAmount)
     self.lastHitTime = Shared.GetTime()
-    return false
 end
 function ExoShield:AbsorbProjectile(projectileEnt)
     if projectileEnt:isa("Bomb") then
-        self:TriggerEffects("bomb_absorb")
-        self.heatAmount = self.heatAmount+self.kHeatPerDamage*50
+        projectileEnt:TriggerEffects("bomb_absorb")
+        self:AbsorbDamage(100)
     elseif projectileEnt:isa("WhipBomb") then
-        self:TriggerEffects("whipbomb_absorb")
-        self.heatAmount = self.heatAmount+self.kHeatPerDamage*70
+        projectileEnt:TriggerEffects("whipbomb_absorb")
+        self:AbsorbDamage(100)
+        self.lastHitTime = Shared.GetTime()
     end
+end
+function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, armorUsed, healthUsed, damageType, preventAlert)
+    self:AbsorbDamage(damage)
+    return false
 end
 
 --function ExoShield:OnUpdate(deltaTime)
 function ExoShield:ProcessMoveOnWeapon(player, input)
     local deltaTime = input.time
-    --Print("wtf")
-    if self.isShieldDesired then
-        local time = Shared.GetTime()
-        self.isShieldActive = (time > self.shieldChangeTime+self.kShieldOnDelay)
-    else
-        self.isShieldActive = false
+    local time = Shared.GetTime()
+    
+    if self.isShieldDesired and not self.isShieldOverheated then
+        if not self.isShieldDeployed and time > self.shieldDeployChangeTime+self.kShieldToggleDelay then
+            self.isShieldDeployed = true
+            self.shieldDeployChangeTime = time
+        end
+    elseif self.isShieldDeployed and time > self.shieldDeployChangeTime+self.kShieldToggleDelay then
+        self.isShieldDeployed = false
+        self.shieldDeployChangeTime = time
     end
-    self:UpdateHeat(deltaTime)
+    
+    self.isShieldActive = (self.isShieldDeployed and time > self.shieldDeployChangeTime+self.kShieldOnDelay)
+    if Server then
+        self:UpdateHeat(deltaTime, true)
+    else
+        self:UpdateHeat(deltaTime, false)
+    end
     self:UpdatePhysics(deltaTime)
 end
 
@@ -160,6 +206,30 @@ Print("waasdasdt")
 function ExoShield:UpdatePhysics()
     --Print("?!?")
     if self.isShieldActive and not self.isPhysicsActive then
+        self:CreatePhysics()
+    elseif not self.isShieldActive and self.isPhysicsActive then
+        self:DestroyPhysics()
+    end
+    if self.isPhysicsActive then
+        local prevCoords = self:GetShieldCoords(0)
+        local prevAngles = Angles()
+        prevAngles:BuildFromCoords(prevCoords)
+        for i, physBody in ipairs(self.physBodyList) do
+            local currCoords = self:GetShieldCoords(i/self.kPhysBodyCount)
+            local currAngles = Angles()
+            currAngles:BuildFromCoords(currCoords)
+            
+            local sectionAngles = SlerpAngles(prevAngles, currAngles, 0.37)
+            local sectionCoords = sectionAngles:GetCoords()
+            sectionCoords.origin = (prevCoords.origin+currCoords.origin)/2
+            physBody:SetCoords(sectionCoords)
+            
+            prevCoords, prevAngles = currCoords, currAngles
+        end
+    end
+end
+function ExoShield:CreatePhysics()
+    if not self.isPhysicsActive then
         self.isPhysicsActive = true
         self.physBodyList = {}
         
@@ -190,39 +260,24 @@ function ExoShield:UpdatePhysics()
             prevCoords, prevAngles = currCoords, currAngles
         end
         Print("Phyzzz on %s!", Server and "Server" or Client and "Client" or "?!?")
-    elseif not self.isShieldActive and self.isPhysicsActive then
+    end
+end
+function ExoShield:DestroyPhysics()
+    if self.isPhysicsActive then
         for i, physBody in ipairs(self.physBodyList) do
             Shared.DestroyCollisionObject(physBody)
         end
         self.isPhysicsActive = false
         Print("Phyzzz dead on %s.", Server and "Server" or Client and "Client" or "?!?")
     end
-    if self.isPhysicsActive then
-        local prevCoords = self:GetShieldCoords(0)
-        local prevAngles = Angles()
-        prevAngles:BuildFromCoords(prevCoords)
-        for i, physBody in ipairs(self.physBodyList) do
-            local currCoords = self:GetShieldCoords(i/self.kPhysBodyCount)
-            local currAngles = Angles()
-            currAngles:BuildFromCoords(currCoords)
-            
-            local sectionAngles = SlerpAngles(prevAngles, currAngles, 0.37)
-            local sectionCoords = sectionAngles:GetCoords()
-            sectionCoords.origin = (prevCoords.origin+currCoords.origin)/2
-            physBody:SetCoords(sectionCoords)
-            
-            prevCoords, prevAngles = currCoords, currAngles
-        end
-    end
 end
-
 function ExoShield:OnUpdateRender()
     --Print("meow")
     local time = Shared.GetTime()
-    local delay = (self.isShieldDesired and self.kShieldEffectOnDelay or self.kShieldEffectOffDelay)
-    self.shieldEffectScalar = Clamp((time-self.shieldChangeTime)/delay, 0, 1)
-    --Print(tostring(self.shieldChangeTime))
-    if not self.isShieldDesired then
+    local delay = (self.isShieldDeployed and self.kShieldEffectOnDelay or self.kShieldEffectOffDelay)
+    self.shieldEffectScalar = Clamp((time-self.shieldDeployChangeTime)/delay, 0, 1)
+    --Print(tostring(self.shieldDeployChangeTime))
+    if not self.isShieldDeployed then
         self.shieldEffectScalar = 1-self.shieldEffectScalar
     end
     
@@ -257,18 +312,25 @@ function ExoShield:OnUpdateRender()
     coords = coords*rotAngles:GetCoords()
     coords.xAxis = coords.xAxis*24.00
     coords.yAxis = coords.yAxis*0.05
-    coords.zAxis = coords.zAxis*15.00*math.max(0.35, self.shieldEffectScalar)
+    coords.zAxis = coords.zAxis*15.00*(0.1+math.max(0, self.shieldEffectScalar-0.5)/0.5*0.9)
     self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
     self.shieldModel:SetCoords(coords)
     
     local heatDisplayUI = self.heatDisplayUI
     if not heatDisplayUI then
-        heatDisplayUI = Client.CreateGUIView(242, 720)
+        heatDisplayUI = Client.CreateGUIView(242+64, 720)
         heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "ShieldDisplay.lua")
         heatDisplayUI:SetTargetTexture("*exo_claw_" .. self:GetExoWeaponSlotName())
         self.heatDisplayUI = heatDisplayUI
     end
     heatDisplayUI:SetGlobal("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)
+    heatDisplayUI:SetGlobal("idleHeatAmount" .. self:GetExoWeaponSlotName(), self.idleHeatAmount)
+    heatDisplayUI:SetGlobal("shieldStatus" .. self:GetExoWeaponSlotName(), (
+            self.isShieldOverheated and "overheat"
+        or  not self.isShieldDesired and "off"
+        or  self.isInCombat and "combat"
+        or  "on"
+    ))
 end
 
 function ExoShield:GetShieldCoords(fraction)

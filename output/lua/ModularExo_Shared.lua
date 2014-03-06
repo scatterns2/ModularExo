@@ -9,6 +9,8 @@ Script.Load("lua/ModularExo_Exo.lua")
 Script.Load("lua/ModularExo_Exosuit.lua")
 Script.Load("lua/ModularExo_Marine.lua")
 Script.Load("lua/ModularExo_PrototypeLab.lua")
+Script.Load("lua/ModularExo_WhipBomb.lua")
+Script.Load("lua/Weapons/Alien/ModularExo_Bomb.lua")
 
 Script.Load("lua/ModularExo_LiveMixin.lua")
 
