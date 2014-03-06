@@ -17,7 +17,7 @@ ExoShield.kCombatDuration = 1.3
 ExoShield.kShieldOnDelay = 0.8
 ExoShield.kShieldToggleDelay = 1 -- prevent spamming
 
-ExoShield.kShieldDistance = 2.65
+ExoShield.kShieldDistance = 2.3
 ExoShield.kShieldAngle = math.rad(100)
 ExoShield.kShieldDepth = 0.10
 ExoShield.kShieldHeight = 2
@@ -131,6 +131,15 @@ function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, 
     Print("heat: %s", tostring(self.heatAmount))
     self.lastHitTime = Shared.GetTime()
     return false
+end
+function ExoShield:AbsorbProjectile(projectileEnt)
+    if projectileEnt:isa("Bomb") then
+        self:TriggerEffects("bomb_absorb")
+        self.heatAmount = self.heatAmount+self.kHeatPerDamage*50
+    elseif projectileEnt:isa("WhipBomb") then
+        self:TriggerEffects("whipbomb_absorb")
+        self.heatAmount = self.heatAmount+self.kHeatPerDamage*70
+    end
 end
 
 --function ExoShield:OnUpdate(deltaTime)
@@ -246,9 +255,9 @@ function ExoShield:OnUpdateRender()
     
     local rotAngles = Angles(-math.pi/2, 0, 0)
     coords = coords*rotAngles:GetCoords()
-    coords.xAxis = coords.xAxis*20.00
+    coords.xAxis = coords.xAxis*24.00
     coords.yAxis = coords.yAxis*0.05
-    coords.zAxis = coords.zAxis*15.00
+    coords.zAxis = coords.zAxis*15.00*math.max(0.35, self.shieldEffectScalar)
     self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
     self.shieldModel:SetCoords(coords)
     
@@ -256,7 +265,7 @@ function ExoShield:OnUpdateRender()
     if not heatDisplayUI then
         heatDisplayUI = Client.CreateGUIView(242, 720)
         heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "ShieldDisplay.lua")
-        heatDisplayUI:SetTargetTexture("*exo_minigun_" .. self:GetExoWeaponSlotName())
+        heatDisplayUI:SetTargetTexture("*exo_claw_" .. self:GetExoWeaponSlotName())
         self.heatDisplayUI = heatDisplayUI
     end
     heatDisplayUI:SetGlobal("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)

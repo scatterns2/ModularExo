@@ -4,7 +4,7 @@ Script.Load("lua/WhipBomb.lua")
 local orig_WhipBomb_ProcessHit = WhipBomb.ProcessHit
 function WhipBomb:ProcessHit(ent, surface, normal)
     if ent and ent:isa("ExoShield") then
-        self:TriggerEffects("whipbomb_absorb")
+        ent:AbsorbProjectile(self)
         if self.shooter then
             self.shooter:OnBombDetonation(self)
         end

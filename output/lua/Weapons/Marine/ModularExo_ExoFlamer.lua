@@ -505,7 +505,7 @@ function ExoFlamer:OnUpdateRender()
         
             heatDisplayUI = Client.CreateGUIView(242, 720)
             heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "FlamerDisplay.lua")
-            heatDisplayUI:SetTargetTexture("*exo_minigun_" .. self:GetExoWeaponSlotName())
+            heatDisplayUI:SetTargetTexture("*exo_railgun_" .. self:GetExoWeaponSlotName())
             self.heatDisplayUI = heatDisplayUI
             
         end

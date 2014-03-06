@@ -1,3 +1,5 @@
+Script.Load("lua/ModularExo_Balance.lua")
+
 Script.Load("lua/Exo.lua")
 Script.Load("lua/Weapons/Marine/Minigun.lua")
 Script.Load("lua/Weapons/Marine/Railgun.lua")
