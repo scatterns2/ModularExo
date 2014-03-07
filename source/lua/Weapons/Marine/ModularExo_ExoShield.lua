@@ -27,6 +27,8 @@ ExoShield.kIdleBaseHeatMaxDelay = 8--30
 ExoShield.kCombatBaseHeatExtra = 0.1
 ExoShield.kOverheatCooldownGoal = 0
 
+ExoShield.kCorrodeDamageScalar = 0.5
+
 ExoShield.kShieldOnDelay = 0.8
 ExoShield.kShieldToggleDelay = 1 -- prevent spamming (should be longer than kShieldOnDelay)
 
@@ -166,10 +168,10 @@ end
 function ExoShield:AbsorbProjectile(projectileEnt)
     if projectileEnt:isa("Bomb") then
         projectileEnt:TriggerEffects("bomb_absorb")
-        self:AbsorbDamage(100)
+        self:AbsorbDamage(self.kCorrodeDamageScalar)
     elseif projectileEnt:isa("WhipBomb") then
         projectileEnt:TriggerEffects("whipbomb_absorb")
-        self:AbsorbDamage(100)
+        self:AbsorbDamage(self.kCorrodeDamageScalar)
         self.lastHitTime = Shared.GetTime()
     end
 end
