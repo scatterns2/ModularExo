@@ -1,10 +1,12 @@
 
-Script.Load("lua/Weapons/ModularExo_DotMarker.lua")
+Script.Load("lua/Weapons/DotMarker.lua")
 
+print("!!!")
 local orig_DotMarker_OnUpdate = DotMarker.OnUpdate
 function DotMarker:OnUpdate(deltaTime)
     if Server then
         if self.dotMarkerType == DotMarker.kType.Static and not self.isShieldImmuneConditionAdded then
+            Print("APPLIED!")
             local currentImmuneCondition = self.immuneCondition
             self.immuneCondition = (
                     currentImmuneCondition and function(doer, entity) return (currentImmuneCondition(doer, entity) or IsEntityShielded(doer, entity)) end
@@ -14,5 +16,5 @@ function DotMarker:OnUpdate(deltaTime)
         end
     end
     
-    return orig_DotMarker_OnUpdate(deltaTime)
+    return orig_DotMarker_OnUpdate(self, deltaTime)
 end

@@ -21,3 +21,37 @@ function GetLocal(originalFunction, name)
         index = index + 1
     end
 end
+
+function intersectCircleAndLineSegment(pointA, pointB, centrePoint, radius)
+    local lineDiff = pointB-pointA
+    local circleDiff = centrePoint-pointA
+    local dot = lineDiff:DotProduct(circleDiff)
+    local proj = lineDiff*dot/lineDiff:GetLengthSquared()
+    local closestPoint = pointA+proj
+    local distToCenterSquared = (closestPoint-centrePoint):GetLengthSquared()
+    if distToCenterSquared > radius^2 then
+        return false, 0
+    end
+    if distToCenterSquared-radius^2 < kEpsilon then
+        return true, 1, closestPoint
+    end
+    local distToIntersection = (
+            distToIntersection < kEpsilon and radius
+        or  math.sqrt(radius^2-distToCenter)
+    )
+    local t = 1/lineDiff:GetLength()
+    local v = lineDiff*t*distToIntersection
+    
+    local sol1, sol1IsGood = closestPoint+v, false
+    local sol2, sol2IsGood = closestPoint-v, false
+    if v:DotProduct(sol1-pointA) > 0 and v:DotProduct(sol1-pointB) < 0 then sol1IsGood = true end
+    if v:DotProduct(sol2-pointA) > 0 and v:DotProduct(sol2-pointB) < 0 then sol2IsGood = true end
+    if sol1IsGood and sol2IsGood then
+        return true, 2, sol1, sol2
+    elseif sol1IsGood then
+        return true, 1, sol1
+    elseif sol2IsGood then
+        return true, 1, sol2
+    end
+    return false, 0
+end

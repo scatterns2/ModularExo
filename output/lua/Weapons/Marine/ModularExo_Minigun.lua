@@ -1,11 +1,11 @@
 
 Script.Load("lua/Weapons/Marine/Minigun.lua")
 
-Minigun.kMinigunRange = GetLocal(Minigun.Shoot, "kMinigunRange") -- wtf uwe, this does not count as "moddable"
-Minigun.kMinigunSpread = GetLocal(Minigun.Shoot, "kMinigunSpread")
-Minigun.kBulletSize = GetLocal(Minigun.Shoot, "kBulletSize")
+Minigun.kMinigunRange  = Minigun.kMinigunRange  or GetLocal(GetLocal(Minigun.OnTag, "Shoot"), "kMinigunRange" ) -- wtf uwe, this does not count as "moddable"
+Minigun.kMinigunSpread = Minigun.kMinigunSpread or GetLocal(GetLocal(Minigun.OnTag, "Shoot"), "kMinigunSpread")
+Minigun.kBulletSize    = Minigun.kBulletSize    or GetLocal(GetLocal(Minigun.OnTag, "Shoot"), "kBulletSize"   )
 
-ReplaceLocals(Mingiun.OnTag, {
+ReplaceLocals(Minigun.OnTag, {
     Shoot = function(self, leftSide)
         local player = self:GetParent()
         if self.minigunAttacking and player then
@@ -29,9 +29,10 @@ ReplaceLocals(Mingiun.OnTag, {
             local endPoint = startPoint + spreadDirection * range
             
             local trace = Shared.TraceRay(startPoint, endPoint, CollisionRep.Damage, PhysicsMask.MarineBullets, filter)
+            Print("wat %s %s", PhysicsMask.MarineBullets, PhysicsMask.Bullets)
             if not trace.entity then
                 local extents = GetDirectedExtentsForDiameter(spreadDirection, self.kBulletSize)
-                trace = Shared.TraceBox(extents, startPoint, endPoint, CollisionRep.Damage, PhysicsMask.Bullets, filter)
+                trace = Shared.TraceBox(extents, startPoint, endPoint, CollisionRep.Damage, PhysicsMask.MarineBullets, filter)
             end
             
             if trace.fraction < 1 or GetIsVortexed(player) then

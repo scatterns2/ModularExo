@@ -1,15 +1,18 @@
 
 Script.Load("lua/Weapons/Marine/Railgun.lua")
 
+Railgun.kChargeTime  = Railgun.kChargeTime  or GetLocal(GetLocal(GetLocal(Railgun.OnTag, "Shoot"), "ExecuteShot"), "kChargeTime" )
+Railgun.kBulletSize  = Railgun.kBulletSize  or GetLocal(GetLocal(GetLocal(Railgun.OnTag, "Shoot"), "ExecuteShot"), "kBulletSize" )
+
 ReplaceLocals(GetLocal(Railgun.OnTag, "Shoot"), {
     ExecuteShot = function(self, startPoint, endPoint, player)
         local filter = EntityFilterTwo(player, self)
-        local trace = Shared.TraceRay(startPoint, endPoint, CollisionRep.Damage, PhysicsMask.Bullets, EntityFilterAllButIsa("Tunnel"))
+        local trace = Shared.TraceRay(startPoint, endPoint, CollisionRep.Damage, PhysicsMask.MarineBullets, EntityFilterAllButIsa("Tunnel"))
         local hitPointOffset = trace.normal * 0.3
         local direction = (endPoint - startPoint):GetUnit()
-        local damage = kRailgunDamage + math.min(1, (Shared.GetTime() - self.timeChargeStarted) / kChargeTime) * kRailgunChargeDamage
+        local damage = kRailgunDamage + math.min(1, (Shared.GetTime() - self.timeChargeStarted) / self.kChargeTime) * kRailgunChargeDamage
         
-        local extents = GetDirectedExtentsForDiameter(direction, kBulletSize)
+        local extents = GetDirectedExtentsForDiameter(direction, self.kBulletSize)
         
         if trace.fraction < 1 then
             local hitEntities = {}

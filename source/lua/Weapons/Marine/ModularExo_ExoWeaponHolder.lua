@@ -17,4 +17,4 @@ function ExoWeaponHolder:GetAnimationGraphName()
     return player.viewModelGraphName
 end
 
-Class_Reload("ExoWeaponHolder", networkVars)
+--Class_Reload("ExoWeaponHolder", networkVars)

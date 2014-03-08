@@ -4,6 +4,7 @@ Script.Load("lua/Weapons/Marine/ExoWeaponHolder.lua")
 Script.Load("lua/Weapons/Marine/ExoWeaponSlotMixin.lua")
 Script.Load("lua/TechMixin.lua")
 Script.Load("lua/TeamMixin.lua")
+Script.Load("lua/EntityChangeMixin.lua")
 
 Script.Load("lua/ModularExo_ShieldProjectorMixin.lua")
 
@@ -16,6 +17,8 @@ ExoShield.kMapName = "exoshield"
 --               active --*overheat*-> overheated --*delay*-> deployed
 --               active --*toggle*-> deployed --*delay-> undeployed
 -- combat state: idle --*damage*-> combat --*delay*-> idle
+
+-- TODO: Move balance-related stuff into ModularExo_Balance.lua
 ExoShield.kHeatPerDamage = 0.0015
 
 ExoShield.kHeatUndeployedDrainRate = 0.2
@@ -67,6 +70,7 @@ function ExoShield:OnCreate()
     Entity.OnCreate(self)
     
     --InitMixin(self, TechMixin)
+    InitMixin(self, EntityChangeMixin)
     InitMixin(self, LiveMixin)
     InitMixin(self, TeamMixin)
     InitMixin(self, ExoWeaponSlotMixin)
@@ -89,7 +93,7 @@ function ExoShield:OnCreate()
         self.shieldEffectScalar = 0
     end
     
-    self:SetUpdates(true)
+    --self:SetUpdates(true)
 end
 function ExoShield:OnInitialized()
     
@@ -156,7 +160,7 @@ end
 
 function ExoShield:AbsorbDamage(damage)
     self.heatAmount = self.heatAmount+self.kHeatPerDamage*damage
-    --Print("ouch %s! (%s)", damage, self.heatAmount)
+    Print("ouch %s! (%s)", damage, self.heatAmount)
     self.lastHitTime = Shared.GetTime()
 end
 function ExoShield:AbsorbProjectile(projectileEnt)
@@ -171,6 +175,7 @@ function ExoShield:AbsorbProjectile(projectileEnt)
 end
 function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, armorUsed, healthUsed, damageType, preventAlert)
     self:AbsorbDamage(damage)
+    --Print("ouch %s", damage)
     return false, false, 0.0001 -- must be >0 if you want damage numbers to appear
 end
 
@@ -179,6 +184,9 @@ function ExoShield:GetOwner()
 end
 function ExoShield:GetIsShieldActive()
     return self.isShieldActive
+end
+function ExoShield:GetShieldTeam()
+    return kMarineTeamType
 end
 function ExoShield:GetShieldProjectorCoordinates()
     return self:GetShieldCoords()
@@ -190,11 +198,9 @@ function ExoShield:GetShieldAngleExtents()
     return self.kShieldAngle/2, self.kShieldAngle/2
 end
 
---[[function ExoShield:ProcessMoveOnWeapon(player, input)
+--function ExoShield:OnUpdate(deltaTime)
+function ExoShield:ProcessMoveOnWeapon(player, input)
     local deltaTime = input.time
-    self:OnUpdate(deltaTime)
-end]]
-function ExoShield:OnUpdate(deltaTime)
     local time = Shared.GetTime()
     
     if self.isShieldDesired and not self.isShieldOverheated then
@@ -214,6 +220,8 @@ function ExoShield:OnUpdate(deltaTime)
         self:UpdateHeat(deltaTime, false)
     end
     self:UpdatePhysics(deltaTime)
+    
+    self:UpdateShieldProjectorMixin(deltaTime)
 end
 
 function ExoShield:UpdatePhysics()
@@ -386,6 +394,20 @@ end
 
 function ExoShield:GetWeight()
     return 0
+end
+
+-- to fix a bug
+function ExoShield:GetExoWeaponSlotName()
+    return "left"
+end
+function ExoShield:GetIsLeftSlot()
+    return true
+end
+function ExoShield:GetIsRightSlot()
+    return false
+end
+function ExoShield:GetExoWeaponSlot()
+    return ExoWeaponHolder.kSlotNames.Left
 end
 
 Shared.LinkClassToMap("ExoShield", ExoShield.kMapName, networkVars)
