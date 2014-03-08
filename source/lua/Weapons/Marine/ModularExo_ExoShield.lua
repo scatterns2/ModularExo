@@ -5,6 +5,7 @@ Script.Load("lua/Weapons/Marine/ExoWeaponSlotMixin.lua")
 Script.Load("lua/TechMixin.lua")
 Script.Load("lua/TeamMixin.lua")
 Script.Load("lua/EntityChangeMixin.lua")
+Script.Load("lua/NanoShieldMixin.lua")
 
 Script.Load("lua/ModularExo_ShieldProjectorMixin.lua")
 
@@ -65,6 +66,8 @@ AddMixinNetworkVars(ExoWeaponSlotMixin, networkVars)
 AddMixinNetworkVars(LiveMixin, networkVars)
 AddMixinNetworkVars(TeamMixin, networkVars)
 AddMixinNetworkVars(ShieldProjectorMixin, networkVars)
+AddMixinNetworkVars(NanoShieldMixin, networkVars)
+
 
 function ExoShield:OnCreate()
     Entity.OnCreate(self)
@@ -75,6 +78,7 @@ function ExoShield:OnCreate()
     InitMixin(self, TeamMixin)
     InitMixin(self, ExoWeaponSlotMixin)
     InitMixin(self, ShieldProjectorMixin)
+    InitMixin(self, NanoShieldMixin)
     
     self.heatAmount = 0
     self.isShieldDesired = false
@@ -178,6 +182,9 @@ function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, 
     --Print("ouch %s", damage)
     return false, false, 0.0001 -- must be >0 if you want damage numbers to appear
 end
+function ExoShield:GetIsNanoShielded()
+    return true
+end
 
 function ExoShield:GetOwner()
     return self:GetParent()
@@ -189,7 +196,8 @@ function ExoShield:GetShieldTeam()
     return kMarineTeamType
 end
 function ExoShield:GetShieldProjectorCoordinates()
-    return self:GetShieldCoords()
+    local shieldCoords, projectorCoords = self:GetShieldCoords()
+    return projectorCoords
 end
 function ExoShield:GetShieldDistance()
     return self.kShieldDistance
@@ -370,7 +378,10 @@ function ExoShield:GetShieldCoords(fraction)
     local shieldCoords = playerAngles:GetCoords() -- face same way as player
     shieldCoords.origin = playerViewCoords.origin + shieldCoords.zAxis*self.kShieldDistance -- exo's eye pos + an offset in direction of playerAngles
     
-    return shieldCoords
+    local projectorCoords = playerAngles:GetCoords()
+    projectorCoords.origin = playerViewCoords.origin
+    
+    return shieldCoords, projectorCoords
 end
 
 function ExoShield:GetSurfaceOverride(dmg)

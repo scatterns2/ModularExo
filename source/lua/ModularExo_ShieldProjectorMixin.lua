@@ -26,6 +26,7 @@ ShieldProjectorMixin.networkVars = {
 }
 
 function IsEntityShielded(doer, entity)
+    --Print("Entity %s has %s shields nearby.", entity:GetClassName(), tostring(entity.nearShieldCount))
     if entity.nearShieldCount and entity.nearShieldCount > 0 then
         for shieldI, shieldEntity in ipairs(entity.nearShieldList) do
             if shieldEntity:GetIsEntityShieldedFromDoer(entity, doer) then
@@ -66,12 +67,15 @@ function ShieldProjectorMixin:GetIsEntityShieldedFromDoer(entity, doer)
     if entity == self then return false end
     if self:GetIsShieldActive() then
         local projectorCoords = self:GetShieldProjectorCoordinates()
-        Print("blah")
-        if (projectorCoords.origin-entity:GetOrigin()):GetLength() < self:GetShieldDistance()*1.2 then
+        local projectorOrigin2d = projectorCoords.origin projectorOrigin2d.y = 0
+        local entityOrigin2d = entity:GetOrigin() entityOrigin2d.y = 0
+        local dist2d = (projectorOrigin2d-entityOrigin2d):GetLength()
+        Print("GetIsEntityShieldedFromDoer(%s, %s) -> dist2d = %s", entity:GetClassName(), doer:GetClassName(), tostring(dist2d))
+        if dist2d <= self:GetShieldDistance()*0.2 then
+            return true
+        elseif dist2d <= self:GetShieldDistance()*1.2 then
             local projectorDir2d = GetNormalizedVectorXZ(projectorCoords.zAxis)
-            local projectorOrigin2d = projectorCoords.origin projectorOrigin2d.y = 0
             local doerOrigin2d = doer:GetOrigin() doerOrigin2d.y = 0
-            local entityOrigin2d = entity:GetOrigin() entityOrigin2d.y = 0
             
             local doesIntersect, intersectCount, intersectPointA, intersectPointB = intersectCircleAndLineSegment(doerOrigin2d, entityOrigin2d, projectorOrigin2d, self:GetShieldDistance())
             Print("GetIsEntityShieldedFromDoer(%s, %s) -> %s", entity:GetClassName(), doer:GetClassName(), tostring(doesIntersect))
@@ -79,13 +83,27 @@ function ShieldProjectorMixin:GetIsEntityShieldedFromDoer(entity, doer)
                 local leftMaxAngle, rightMaxAngle = self:GetShieldAngleExtents()
                 for intersectI = 1, intersectCount do
                     local intersectPoint = (intersectCount == 1 and intersectPointA or intersectPointB)
-                    local dir = (intersectPoint-projectorOrigin2d):GetNormalized()
-                    local isLeft = (projectorDir2d:CrossProduct(dir) > 0)
+                    local dir = GetNormalizedVector(intersectPoint-projectorOrigin2d)
+                    local isLeft = (projectorDir2d:CrossProduct(dir).y > 0)
                     local maxAngle = (isLeft and leftMaxAngle or rightMaxAngle)
-                    local isWithinAngle = projectorDir2d:DotProduct(dir) < math.cos(maxAngle)
-                    Print("GetIsEntityShieldedFromDoer(%s, %s) -> %s, %s", entity:GetClassName(), doer:GetClassName(), isLeft and "left" or "right", tostring(isWithinAngle))
+                    local isWithinAngle = (projectorDir2d:DotProduct(dir) > math.cos(maxAngle))
+                    Print("GetIsEntityShieldedFromDoer(%s, %s) -> %s, %s",
+                        entity:GetClassName(), doer:GetClassName(), isLeft and "left" or "right", tostring(isWithinAngle)
+                    )
+                    Print("GetIsEntityShieldedFromDoer(%s, %s) -> %s < %s",
+                        entity:GetClassName(), doer:GetClassName(), projectorDir2d:DotProduct(dir), math.cos(maxAngle)
+                    )
                     if isWithinAngle then
+                        intersectPoint.y = doer:GetOrigin().y+0.4
+                        DebugLine(doer:GetOrigin(), intersectPoint, 1, 0, 1, 0, 1)
+                        DebugLine(intersectPoint, entity:GetOrigin(), 1, 0, 1, 0, 1)
+                        intersectPoint.y = 0
                         return true
+                    else
+                        intersectPoint.y = doer:GetOrigin().y+0.4
+                        DebugLine(doer:GetOrigin(), intersectPoint, 1, 1, 0, 0, 1)
+                        DebugLine(intersectPoint, entity:GetOrigin(), 1, 1, 0, 0, 1)
+                        intersectPoint.y = 0
                     end
                 end
             end
@@ -118,7 +136,7 @@ function ShieldProjectorMixin:UpdateShieldProjectorMixin(deltaTime)
                         local entityI = #self.nearbyShieldableEntityIdList+1
                         self.nearbyShieldableEntityIdList[entityI] = nearbyEntity:GetId()
                         self.nearbyShieldableEntityIdMap[nearbyEntity:GetId()] = entityI
-                            
+                        
                         if not nearbyEntity.nearShieldCount then
                             nearbyEntity.nearShieldCount = 0
                             nearbyEntity.nearShieldList = {}

@@ -32,12 +32,12 @@ function intersectCircleAndLineSegment(pointA, pointB, centrePoint, radius)
     if distToCenterSquared > radius^2 then
         return false, 0
     end
-    if distToCenterSquared-radius^2 < kEpsilon then
+    if math.abs(distToCenterSquared-radius^2) < kEpsilon then
         return true, 1, closestPoint
     end
     local distToIntersection = (
-            distToIntersection < kEpsilon and radius
-        or  math.sqrt(radius^2-distToCenter)
+            distToCenterSquared < kEpsilon and radius
+        or  math.sqrt(radius^2-distToCenterSquared)
     )
     local t = 1/lineDiff:GetLength()
     local v = lineDiff*t*distToIntersection
