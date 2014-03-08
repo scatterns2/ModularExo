@@ -12,8 +12,8 @@ Event.Hook("Console_xxx", function(client, lm, rm)
     if true or Shared.GetCheatsEnabled() then
         local player = client:GetControllingPlayer()
         local extraValues = {
-            leftArmModuleType  = shorthandMap[tostring(lm)] or kExoModuleTypes.Claw,
-            rightArmModuleType = shorthandMap[tostring(rm)] or kExoModuleTypes.Minigun,
+            leftArmModuleType  = exoConfigShorthandMap[tostring(lm)] or kExoModuleTypes.Claw,
+            rightArmModuleType = exoConfigShorthandMap[tostring(rm)] or kExoModuleTypes.Minigun,
         }
         player:Replace("exo", player:GetTeamNumber(), false, nil, extraValues)
     end

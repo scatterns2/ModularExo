@@ -1,8 +1,11 @@
 
 Script.Load("lua/LiveMixin.lua")
+Script.Load("lua/Weapons/Marine/ExoWeaponHolder.lua")
 Script.Load("lua/Weapons/Marine/ExoWeaponSlotMixin.lua")
 Script.Load("lua/TechMixin.lua")
 Script.Load("lua/TeamMixin.lua")
+
+Script.Load("lua/ModularExo_ShieldProjectorMixin.lua")
 
 class 'ExoShield' (Entity)
 
@@ -13,17 +16,17 @@ ExoShield.kMapName = "exoshield"
 --               active --*overheat*-> overheated --*delay*-> deployed
 --               active --*toggle*-> deployed --*delay-> undeployed
 -- combat state: idle --*damage*-> combat --*delay*-> idle
-ExoShield.kHeatPerDamage = 0.002
+ExoShield.kHeatPerDamage = 0.0015
 
-ExoShield.kHeatUndeployedDrainRate = 0.25
-ExoShield.kHeatActiveDrainRate = 0.2
-ExoShield.kHeatOverheatedDrainRate = 0.2
-ExoShield.kHeatCombatDrainRate = 0.1
-ExoShield.kCombatDuration = 1.3
+ExoShield.kHeatUndeployedDrainRate = 0.2
+ExoShield.kHeatActiveDrainRate = 0.1
+ExoShield.kHeatOverheatedDrainRate = 0.13
+ExoShield.kHeatCombatDrainRate = 0.05
+ExoShield.kCombatDuration = 2.5
 
 ExoShield.kIdleBaseHeatMin = 0.0
 ExoShield.kIdleBaseHeatMax = 0.2
-ExoShield.kIdleBaseHeatMaxDelay = 8--30
+ExoShield.kIdleBaseHeatMaxDelay = 10--30
 ExoShield.kCombatBaseHeatExtra = 0.1
 ExoShield.kOverheatCooldownGoal = 0
 
@@ -44,32 +47,21 @@ ExoShield.kShieldPitchUpLimit    = math.rad(30)
 ExoShield.kShieldEffectOnDelay = 1
 ExoShield.kShieldEffectOffDelay = 0.6
 
---!!!
-Script.Load("lua/PhysicsGroups.lua")
-
-if not rawget(PhysicsGroup, "ShieldGroup") then
-    local i = #PhysicsGroup+1
-    rawset(PhysicsGroup, i, "ShieldGroup")
-    rawset(PhysicsGroup, "ShieldGroup", i)
-end
-
-PhysicsMask.All = CreateMaskExcludingGroups(PhysicsGroup.ShieldGroup)
---!!!
-
 local networkVars = {
-    heatAmount = "private float (0 to 1 by 0.01)", -- current shield heat
-    isShieldDesired = "private boolean", -- if the user wants the shield up (click to toggle)
-    isShieldDeployed = "private boolean", -- if the shield is "powered" (may not be active)
-    --isShieldActive = "private boolean", -- if the shield is 
-    isShieldOverheated = "private boolean", -- if the shield is currently cooling down from an overheat
-    shieldDeployChangeTime = "private time", -- the time the shield was deployed/undeployed
-    lastHitTime = "private time", -- the last time damage was done to the shield
+    heatAmount = "float (0 to 1 by 0.01)", -- current shield heat
+    isShieldDesired = "boolean", -- if the user wants the shield up (click to toggle)
+    isShieldDeployed = "boolean", -- if the shield is "powered" (may not be active)
+    --isShieldActive = "boolean", -- if the shield is 
+    isShieldOverheated = "boolean", -- if the shield is currently cooling down from an overheat
+    shieldDeployChangeTime = "time", -- the time the shield was deployed/undeployed
+    lastHitTime = "time", -- the last time damage was done to the shield
 }
 
 --AddMixinNetworkVars(TechMixin, networkVars)
+AddMixinNetworkVars(ExoWeaponSlotMixin, networkVars)
 AddMixinNetworkVars(LiveMixin, networkVars)
 AddMixinNetworkVars(TeamMixin, networkVars)
-AddMixinNetworkVars(ExoWeaponSlotMixin, networkVars)
+AddMixinNetworkVars(ShieldProjectorMixin, networkVars)
 
 function ExoShield:OnCreate()
     Entity.OnCreate(self)
@@ -78,6 +70,7 @@ function ExoShield:OnCreate()
     InitMixin(self, LiveMixin)
     InitMixin(self, TeamMixin)
     InitMixin(self, ExoWeaponSlotMixin)
+    InitMixin(self, ShieldProjectorMixin)
     
     self.heatAmount = 0
     self.isShieldDesired = false
@@ -96,6 +89,7 @@ function ExoShield:OnCreate()
         self.shieldEffectScalar = 0
     end
     
+    self:SetUpdates(true)
 end
 function ExoShield:OnInitialized()
     
@@ -162,7 +156,7 @@ end
 
 function ExoShield:AbsorbDamage(damage)
     self.heatAmount = self.heatAmount+self.kHeatPerDamage*damage
-    Print("ouch %s! (%s)", damage, self.heatAmount)
+    --Print("ouch %s! (%s)", damage, self.heatAmount)
     self.lastHitTime = Shared.GetTime()
 end
 function ExoShield:AbsorbProjectile(projectileEnt)
@@ -177,12 +171,30 @@ function ExoShield:AbsorbProjectile(projectileEnt)
 end
 function ExoShield:OverrideTakeDamage(damage, attacker, doer, point, direction, armorUsed, healthUsed, damageType, preventAlert)
     self:AbsorbDamage(damage)
-    return false
+    return false, false, 0.0001 -- must be >0 if you want damage numbers to appear
 end
 
---function ExoShield:OnUpdate(deltaTime)
-function ExoShield:ProcessMoveOnWeapon(player, input)
+function ExoShield:GetOwner()
+    return self:GetParent()
+end
+function ExoShield:GetIsShieldActive()
+    return self.isShieldActive
+end
+function ExoShield:GetShieldProjectorCoordinates()
+    return self:GetShieldCoords()
+end
+function ExoShield:GetShieldDistance()
+    return self.kShieldDistance
+end
+function ExoShield:GetShieldAngleExtents()
+    return self.kShieldAngle/2, self.kShieldAngle/2
+end
+
+--[[function ExoShield:ProcessMoveOnWeapon(player, input)
     local deltaTime = input.time
+    self:OnUpdate(deltaTime)
+end]]
+function ExoShield:OnUpdate(deltaTime)
     local time = Shared.GetTime()
     
     if self.isShieldDesired and not self.isShieldOverheated then
@@ -204,7 +216,6 @@ function ExoShield:ProcessMoveOnWeapon(player, input)
     self:UpdatePhysics(deltaTime)
 end
 
-Print("waasdasdt")
 function ExoShield:UpdatePhysics()
     --Print("?!?")
     if self.isShieldActive and not self.isPhysicsActive then
@@ -261,7 +272,7 @@ function ExoShield:CreatePhysics()
             
             prevCoords, prevAngles = currCoords, currAngles
         end
-        Print("Phyzzz on %s!", Server and "Server" or Client and "Client" or "?!?")
+        --Print("Phyzzz on %s!", Server and "Server" or Client and "Client" or "?!?")
     end
 end
 function ExoShield:DestroyPhysics()
@@ -270,7 +281,7 @@ function ExoShield:DestroyPhysics()
             Shared.DestroyCollisionObject(physBody)
         end
         self.isPhysicsActive = false
-        Print("Phyzzz dead on %s.", Server and "Server" or Client and "Client" or "?!?")
+        --Print("Phyzzz dead on %s.", Server and "Server" or Client and "Client" or "?!?")
     end
 end
 function ExoShield:OnUpdateRender()
@@ -318,21 +329,24 @@ function ExoShield:OnUpdateRender()
     self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
     self.shieldModel:SetCoords(coords)
     
-    local heatDisplayUI = self.heatDisplayUI
-    if not heatDisplayUI then
-        heatDisplayUI = Client.CreateGUIView(242+64, 720)
-        heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "ShieldDisplay.lua")
-        heatDisplayUI:SetTargetTexture("*exo_claw_" .. self:GetExoWeaponSlotName())
-        self.heatDisplayUI = heatDisplayUI
+    local parent = self:GetParent()
+    if parent and parent:GetIsLocalPlayer() then
+        local heatDisplayUI = self.heatDisplayUI
+        if not heatDisplayUI then
+            heatDisplayUI = Client.CreateGUIView(242+64, 720)
+            heatDisplayUI:Load("lua/ModularExo_GUI" .. self:GetExoWeaponSlotName():gsub("^%l", string.upper) .. "ShieldDisplay.lua")
+            heatDisplayUI:SetTargetTexture("*exo_claw_" .. self:GetExoWeaponSlotName())
+            self.heatDisplayUI = heatDisplayUI
+        end
+        heatDisplayUI:SetGlobal("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)
+        heatDisplayUI:SetGlobal("idleHeatAmount" .. self:GetExoWeaponSlotName(), self.idleHeatAmount)
+        heatDisplayUI:SetGlobal("shieldStatus" .. self:GetExoWeaponSlotName(), (
+                self.isShieldOverheated and "overheat"
+            or  not self.isShieldDesired and "off"
+            or  self.isInCombat and "combat"
+            or  "on"
+        ))
     end
-    heatDisplayUI:SetGlobal("heatAmount" .. self:GetExoWeaponSlotName(), self.heatAmount)
-    heatDisplayUI:SetGlobal("idleHeatAmount" .. self:GetExoWeaponSlotName(), self.idleHeatAmount)
-    heatDisplayUI:SetGlobal("shieldStatus" .. self:GetExoWeaponSlotName(), (
-            self.isShieldOverheated and "overheat"
-        or  not self.isShieldDesired and "off"
-        or  self.isInCombat and "combat"
-        or  "on"
-    ))
 end
 
 function ExoShield:GetShieldCoords(fraction)
@@ -343,12 +357,16 @@ function ExoShield:GetShieldCoords(fraction)
     playerAngles:BuildFromCoords(playerViewCoords)
     
     playerAngles.pitch = Clamp(playerAngles.pitch+self.kShieldPitchUpDeadzone, -self.kShieldPitchUpLimit, 0)
-    playerAngles.yaw = playerAngles.yaw+(fraction-0.5)*ExoShield.kShieldAngle
+    playerAngles.yaw = playerAngles.yaw+(fraction-0.5)*self.kShieldAngle
     
     local shieldCoords = playerAngles:GetCoords() -- face same way as player
     shieldCoords.origin = playerViewCoords.origin + shieldCoords.zAxis*self.kShieldDistance -- exo's eye pos + an offset in direction of playerAngles
     
     return shieldCoords
+end
+
+function ExoShield:GetSurfaceOverride(dmg)
+    return "nanoshield" -- alternatively: "electronic", "armor", "flame", "ethereal", "hallucination", "structure"
 end
 
 function ExoShield:OnTag(tagName)

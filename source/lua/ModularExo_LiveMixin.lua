@@ -3,8 +3,12 @@ Script.Load("lua/LiveMixin.lua")
 
 local orig_LiveMixin_TakeDamage = LiveMixin.TakeDamage
 function LiveMixin:TakeDamage(...)
+    local shouldExecuteTakeDamage, killedFromDamage, damageDone = true
     if self.OverrideTakeDamage then
-        return self:OverrideTakeDamage(...)
+        shouldExecuteTakeDamage, killedFromDamage, damageDone = self:OverrideTakeDamage(...)
     end
-    orig_LiveMixin_TakeDamage(self, ...)
+    if shouldExecuteTakeDamage then
+        killedFromDamage, damageDone = orig_LiveMixin_TakeDamage(self, ...)
+    end
+    return killedFromDamage, damageDone
 end

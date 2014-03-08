@@ -1,9 +1,17 @@
+Script.Load("lua/ModularExo_Util.lua")
+
+Script.Load("lua/ModularExo_PhysicsGroups.lua")
+
 Script.Load("lua/ModularExo_Balance.lua")
+
+Script.Load("lua/ModularExo_NS2Utility.lua")
 
 Script.Load("lua/Exo.lua")
 Script.Load("lua/Weapons/Marine/Minigun.lua")
 Script.Load("lua/Weapons/Marine/Railgun.lua")
 Script.Load("lua/Weapons/Marine/Claw.lua")
+
+Script.Load("lua/ModularExo_ShieldedMixin.lua")
 
 Script.Load("lua/ModularExo_Exo.lua")
 Script.Load("lua/ModularExo_Exosuit.lua")
@@ -11,6 +19,9 @@ Script.Load("lua/ModularExo_Marine.lua")
 Script.Load("lua/ModularExo_PrototypeLab.lua")
 Script.Load("lua/ModularExo_WhipBomb.lua")
 Script.Load("lua/Weapons/Alien/ModularExo_Bomb.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_Minigun.lua")
+Script.Load("lua/Weapons/Marine/ModularExo_Railgun.lua")
+Script.Load("lua/ModularExo_DamageTypes.lua")
 
 Script.Load("lua/ModularExo_LiveMixin.lua")
 

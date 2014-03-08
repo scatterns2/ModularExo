@@ -10,6 +10,7 @@
 Script.Load("lua/Weapons/Marine/Flame.lua")
 Script.Load("lua/Weapons/Weapon.lua")
 Script.Load("lua/LiveMixin.lua")
+Script.Load("lua/Weapons/Marine/ExoWeaponHolder.lua")
 Script.Load("lua/Weapons/Marine/ExoWeaponSlotMixin.lua")
 Script.Load("lua/TechMixin.lua")
 Script.Load("lua/TeamMixin.lua")
