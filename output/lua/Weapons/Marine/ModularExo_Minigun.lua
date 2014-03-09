@@ -29,7 +29,6 @@ ReplaceLocals(Minigun.OnTag, {
             local endPoint = startPoint + spreadDirection * range
             
             local trace = Shared.TraceRay(startPoint, endPoint, CollisionRep.Damage, PhysicsMask.MarineBullets, filter)
-            Print("wat %s %s", PhysicsMask.MarineBullets, PhysicsMask.Bullets)
             if not trace.entity then
                 local extents = GetDirectedExtentsForDiameter(spreadDirection, self.kBulletSize)
                 trace = Shared.TraceBox(extents, startPoint, endPoint, CollisionRep.Damage, PhysicsMask.MarineBullets, filter)

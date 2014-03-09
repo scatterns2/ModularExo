@@ -1,0 +1,6 @@
+shader = "shaders/Model_emissive_alpha.surface_shader"
+emissiveMap = "models/exoshield_hexagon.dds"
+albedoMap = "models/exoshield_hexagon.dds"
+normalMap = "models/exoshield_hexagon.dds"
+specularMap = "models/exoshield_hexagon.dds"
+opacityMap = "models/exoshield_hexagon.dds"
