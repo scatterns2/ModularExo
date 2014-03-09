@@ -16,8 +16,14 @@ local time = 0
 local kTexture = "models/marine/exosuit/exosuit_view_panel_mini2.dds"
 
 local offCol = Color(1, 1, 1, 1)
-local onCol = Color(0, 0, 1, 1)
-local combatCol = Color(1, 1, 0, 1)
+local onCol = Color(0.4, 0.4, 1, 1)
+local warningCol = Color(1, 0.6, 0)
+local warningPoint = 0.7
+
+local heatOffCol = Color(0.3, 0.3, 0.3)
+local heatOnCol = Color(0.7, 0.6, 0)
+local heatCombatCol = Color(0.7, 0.2, 0)
+
 local overheatCol1 = Color(1, 0, 0, 1)
 local overheatCol2 = Color(1, 1, 0, 1)
 local overheatPulseRate = 0.3
@@ -33,16 +39,22 @@ function UpdateOverHeat(dt, heatAmount, idleHeatAmount, shieldStatus)
     local flash = false
     local alertColor = (
             shieldStatus == "off" and offcol
-        or  shieldStatus == "on" and onCol
-        or  shieldStatus == "combat" and combatCol
+        or  (shieldStatus == "on" or shieldStatus == "combat") and (heatAmount < warningPoint and onCol or warningCol)
         or  shieldStatus == "overheat" and ((time%overheatPulseRate) < overheatPulseRate/2 and overheatCol1 or overheatCol2)
         or  Color(1, 0.6, 0.6, 1)
     )
     alertLight:SetColor(alertColor)
     
-    foreground:SetColor(alertColor)
+    local foregroundColor = (
+            shieldStatus == "off" and heatOffCol
+        or  shieldStatus == "on" and heatOnCol
+        or  shieldStatus == "combat" and heatCombatCol
+        or  shieldStatus == "overheat" and ((time%overheatPulseRate) < overheatPulseRate/2 and overheatCol1 or overheatCol2)
+        or  Color(1, 0.6, 0.6, 1)
+    )
+    foreground:SetColor(foregroundColor)
     
-    idleArrow:SetPosition(Vector(720+64, 512-idleHeatAmount*512, 0))
+    --idleArrow:SetPosition(Vector(720+64, 512-idleHeatAmount*512, 0))
     
     time = time + dt
 end
@@ -79,11 +91,11 @@ function Initialize()
     alertLight:SetTexturePixelCoordinates(240, 0, 290, 512)
     alertLight:SetTexture(kTexture)
     
-    idleArrow = GUI.CreateItem()
+    --[[idleArrow = GUI.CreateItem()
     idleArrow:SetSize(Vector(-64, 64, 0))
     idleArrow:SetPosition(Vector(720+64, 0, 0))
     idleArrow:SetTexturePixelCoordinates(0, 0, 64, 64)
-    idleArrow:SetTexture("ui/menu/arrow_horiz.dds")
+    idleArrow:SetTexture("ui/menu/arrow_horiz.dds")]]
     
     background:AddChild(foregroundMask)
     background:AddChild(alertLight)

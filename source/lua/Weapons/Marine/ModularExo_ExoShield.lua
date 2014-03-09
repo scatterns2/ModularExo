@@ -115,6 +115,12 @@ function ExoShield:OnDestroy()
             Client.DestroyRenderLight(self.clawLight)
             self.clawLight = nil
         end
+        if self.cinematicList then
+            for cinematicI, cinematic in ipairs(self.cinematicList) do
+                Client.DestroyCinematic(cinematic)
+            end
+            self.cinematicList = nil
+        end
         if self.heatDisplayUI then
             Client.DestroyGUIView(self.heatDisplayUI)
             self.heatDisplayUI = nil
@@ -300,6 +306,7 @@ function ExoShield:DestroyPhysics()
         --Print("Phyzzz dead on %s.", Server and "Server" or Client and "Client" or "?!?")
     end
 end
+Print("pewpew")
 function ExoShield:OnUpdateRender()
     --Print("meow")
     local time = Shared.GetTime()
@@ -310,6 +317,8 @@ function ExoShield:OnUpdateRender()
         self.shieldEffectScalar = 1-self.shieldEffectScalar
     end
     
+    local coords = self:GetShieldCoords()
+    
     local player = self:GetParent()
     if not self.clawLight then
         self.clawLight = Client.CreateRenderLight()
@@ -318,32 +327,45 @@ function ExoShield:OnUpdateRender()
         self.clawLight:SetAtmosphericDensity(1)
         self.clawLight:SetSpecular(0)
     end
-    
-    local shouldDisplayAsViewModel = (player == Client.GetLocalPlayer() and player:GetIsFirstPerson())
-    if not self.shieldModel or (shouldDisplayAsViewModel ~= self.shieldModelIsViewModel) then
-        if self.shieldModel then
-            Client.DestroyRenderModel(self.shieldModel)
-            self.shieldModel = nil
-        end
-        self.shieldModelIsViewModel = shouldDisplayAsViewModel
-        self.shieldModel = Client.CreateRenderModel(RenderScene.Zone_Default)--shouldDisplayAsViewModel and RenderScene.Zone_ViewModel or RenderScene.Zone_Default)
-        self.shieldModel:SetModel("models/effects/arc_blast.model")
-    end
-    
-    local coords = self:GetShieldCoords()
     self.clawLight:SetIsVisible(self.shieldEffectScalar > 0)
     self.clawLight:SetRadius(10*self.shieldEffectScalar)
     self.clawLight:SetIntensity(100*self.shieldEffectScalar)
     self.clawLight:SetColor(LerpColor(Color(0, 0.7, 1, 1), Color(1, 0, 0, 1), self.heatAmount))
     self.clawLight:SetCoords(coords)
     
+    
+    if false and not self.shieldModel then
+        self.shieldModelIsViewModel = shouldDisplayAsViewModel
+        self.shieldModel = Client.CreateRenderModel(RenderScene.Zone_Default)
+        self.shieldModel:SetModel("models/effects/arc_blast.model")
+    end
     local rotAngles = Angles(-math.pi/2, 0, 0)
     coords = coords*rotAngles:GetCoords()
     coords.xAxis = coords.xAxis*24.00
     coords.yAxis = coords.yAxis*0.05
     coords.zAxis = coords.zAxis*15.00*(0.1+math.max(0, self.shieldEffectScalar-0.5)/0.5*0.9)
-    self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
-    self.shieldModel:SetCoords(coords)
+    if self.shieldModel then
+        self.shieldModel:SetIsVisible(self.shieldEffectScalar > 0)
+        self.shieldModel:SetCoords(coords)
+    end
+    
+    
+    if not self.cinematicList then
+        self.cinematicList = {}
+        for cinematicI = 1, 6 do
+            local cinematic = Client.CreateCinematic(RenderScene.Zone_Default)
+            cinematic:SetCinematic("cinematics/modularexo/exoshield_hexagon_idle.cinematic")
+            cinematic:SetRepeatStyle(Cinematic.Repeat_Endless)
+            --cinematic:SetCoords(coords)
+            self.cinematicList[cinematicI] = cinematic
+        end
+    end
+    if self.cinematicList then
+        for cinematicI, cinematic in ipairs(self.cinematicList) do
+            cinematic:SetCoords(self:GetShieldCoords((0.5+cinematicI)/#self.cinematicList))
+        end
+    end
+    
     
     local parent = self:GetParent()
     if parent and parent:GetIsLocalPlayer() then
